@@ -10,7 +10,11 @@ describe("test", () => {
 
   it("Is initialized!", async () => {
     // Add your test here.
-    const tx = await program.methods.initialize().rpc();
-    console.log("Your transaction signature", tx);
+
+    const [counterPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("counter")],program.programId);
+    console.log(counterPDA.toString())
+    // const tx = await program.methods.initialize().rpc();
+    // console.log("Your transaction signature", tx);
+    // const tx1 = await program.methods.increase().rpc();
   });
 });
