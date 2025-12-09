@@ -12,7 +12,8 @@ pub mod test {
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         let counter = &mut ctx.accounts.counter;
-        counter.count = 0;
+        counter.bump = ctx.bumps.counter;
+        counter.count = 586786;
         Ok(())
     }
     pub fn increase(ctx: Context<CounterIncrease>) -> Result<()> {
@@ -20,7 +21,7 @@ pub mod test {
         counter.count += 1;
         Ok(())
     }
-    ////fucnton signature
+    ////fucntion signature
     #[derive(Accounts)]
 
     pub struct Initialize<'info> {

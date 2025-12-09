@@ -10,11 +10,22 @@ describe("test", () => {
 
   it("Is initialized!", async () => {
     // Add your test here.
-
-    const [counterPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("counter")],program.programId);
+    let provider = anchor.getProvider();
+    const [counterPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("counter-acc")],program.programId);
     console.log(counterPDA.toString())
-    // const tx = await program.methods.initialize().rpc();
-    // console.log("Your transaction signature", tx);
-    // const tx1 = await program.methods.increase().rpc();
+    const tx = await program.methods.initialize().accounts({
+      counter: counterPDA,
+      authority:provider.wallet.publicKey,
+      systemProgram:anchor.web3.SystemProgram.programId
+    }).rpc();
+    console.log("Your transaction signature", tx);
+
+    let counterData = await program.account.counterAcc.fetch(counterPDA);
+    console.log("init value = ",counterData.count.toString())
+    const tx1 = await program.methods.increase().accounts({
+      counter:counterPDA
+    }).rpc();
+    let counterData1 = await program.account.counterAcc.fetch(counterPDA);
+    console.log("init value = ",counterData1.count.toString())
   });
 });
