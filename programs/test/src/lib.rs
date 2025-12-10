@@ -45,11 +45,15 @@ pub mod test {
     }
     //function signature
     #[derive(Accounts)]
+    #[instruction(amount:u64)]
     pub struct CounterChange<'info> {
         #[account(
             mut,
             seeds = [b"counter-acc"],
-            bump = counter.bump
+            bump = counter.bump,
+            constraint = counter.count >= amount || amount == 0,
+            constraint = amount <= 1000,
+            constraint = amount > 0,
         )]
         pub counter: Account<'info, CounterAcc>,
     }
