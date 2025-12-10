@@ -8,6 +8,8 @@ const ADMIN_PUBKEY: Pubkey = pubkey!("DsqQPGmhhySWUFaWDEDVifLGUfe3DwnZ7MnVJcNW5Y
 #[program]
 pub mod test {
 
+    use anchor_lang::accounts::account;
+
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -16,9 +18,14 @@ pub mod test {
         counter.count = 586786;
         Ok(())
     }
-    pub fn increase(ctx: Context<CounterIncrease>) -> Result<()> {
+    pub fn increase(ctx: Context<CounterChange>, amount: u64) -> Result<()> {
         let counter = &mut ctx.accounts.counter;
-        counter.count += 1;
+        counter.count += amount;
+        Ok(())
+    }
+    pub fn decrease(ctx: Context<CounterChange>, amount: u64) -> Result<()> {
+        let counter = &mut ctx.accounts.counter;
+        counter.count -= amount;
         Ok(())
     }
     ////fucntion signature
@@ -38,7 +45,7 @@ pub mod test {
     }
     //function signature
     #[derive(Accounts)]
-    pub struct CounterIncrease<'info> {
+    pub struct CounterChange<'info> {
         #[account(
             mut,
             seeds = [b"counter-acc"],
