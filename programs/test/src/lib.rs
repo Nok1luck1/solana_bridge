@@ -8,8 +8,6 @@ const ADMIN_PUBKEY: Pubkey = pubkey!("DsqQPGmhhySWUFaWDEDVifLGUfe3DwnZ7MnVJcNW5Y
 #[program]
 pub mod test {
 
-    use anchor_lang::accounts::account;
-
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -26,6 +24,9 @@ pub mod test {
     pub fn decrease(ctx: Context<CounterChange>, amount: u64) -> Result<()> {
         let counter = &mut ctx.accounts.counter;
         counter.count -= amount;
+        Ok(())
+    }
+    pub fn vote(ctx: Context<Vote>) -> Result<()> {
         Ok(())
     }
     ////fucntion signature
@@ -57,10 +58,27 @@ pub mod test {
         )]
         pub counter: Account<'info, CounterAcc>,
     }
+    #[derive(Accounts)]
+    #[instruction(numberofvoice:u64)]
+    pub struct Vote<'info> {
+        #[account(mut,
+        seeds = [b"candidates"],
+        bump = candidate.bump
+        )]
+        pub candidate: Account<'info, VoteList>,
+    }
 
     #[account]
     pub struct CounterAcc {
         pub count: u64,
+        pub bump: u8,
+    }
+
+    #[account]
+    pub struct VoteList {
+        pub candidate1voice: u64,
+        pub candidate2voice: u64,
+        pub candidate3voice: u64,
         pub bump: u8,
     }
     // #[error_code]
