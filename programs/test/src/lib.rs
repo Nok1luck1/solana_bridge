@@ -26,7 +26,7 @@ pub mod test {
         counter.count -= amount;
         Ok(())
     }
-    pub fn vote(ctx: Context<Vote>) -> Result<()> {
+    pub fn vote(ctx: Context<Vote>, candidatename: String, voices: u64) -> Result<()> {
         Ok(())
     }
     ////fucntion signature
@@ -58,32 +58,34 @@ pub mod test {
         )]
         pub counter: Account<'info, CounterAcc>,
     }
-    #[derive(Accounts)]
-    #[instruction(numberofvoice:u64)]
-    pub struct Vote<'info> {
-        #[account(mut,
-        seeds = [b"candidates"],
-        bump = candidate.bump
-        )]
-        pub candidate: Account<'info, VoteList>,
-    }
 
     #[account]
     pub struct CounterAcc {
         pub count: u64,
         pub bump: u8,
     }
+    #[derive(Accounts)]
+    pub struct InitCandidate<'info> {
+        #[account(mut,
+        seeds = [b"vote-accounts"],
+        bump = vote.bump)]
+        pub candidate: Account<'info, VoteList>,
+    }
+    #[derive(Accounts)]
+    #[instruction(numberofvoice:u64)]
+    pub struct Vote<'info> {
+        #[account(mut,
+        seeds = [b"vote-list".candidatename.as_key()],
+        bump = candidate.bump
+        )]
+        pub candidate: Account<'info, VoteList>,
+    }
 
     #[account]
     pub struct VoteList {
-        pub candidate1voice: u64,
-        pub candidate2voice: u64,
-        pub candidate3voice: u64,
+        #[max_len(50)]
+        pub candidatename: String,
+        pub candidatevoices: u64,
         pub bump: u8,
     }
-    // #[error_code]
-    // pub enum Errors {
-    //     #[msg("invalid owner")]
-    //     NotOwnerCalled,
-    // }
 }
