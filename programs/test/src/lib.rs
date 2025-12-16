@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 
 declare_id!("BGveEuTKJLqVRJc9sWaX3fjvhYGWesjsyXEe24nVVizA");
 
-const ADMIN_PUBKEY: Pubkey = pubkey!("DsqQPGmhhySWUFaWDEDVifLGUfe3DwnZ7MnVJcNW5Ykv");
+//const ADMIN_PUBKEY: Pubkey = pubkey!("DsqQPGmhhySWUFaWDEDVifLGUfe3DwnZ7MnVJcNW5Ykv");
 
 #[program]
 pub mod test {
@@ -26,7 +26,12 @@ pub mod test {
         counter.count -= amount;
         Ok(())
     }
-    pub fn vote(ctx: Context<Vote>, candidatename: String, voices: u64) -> Result<()> {
+    pub fn initcandidate(ctx: Context<InitCandidate>) -> Result<()> {
+        Ok(())
+    }
+    pub fn vote(ctx: Context<Vote>, voices: u64) -> Result<()> {
+        let candidate = &mut ctx.accounts.candidate;
+        candidate.candidatevoices = voices;
         Ok(())
     }
     ////fucntion signature
@@ -66,25 +71,34 @@ pub mod test {
     }
     #[derive(Accounts)]
     pub struct InitCandidate<'info> {
-        #[account(mut,
-        seeds = [b"vote-accounts"],
-        bump = vote.bump)]
+        #[account(
+            init,
+            payer = creator,
+            seeds = [b"vote-list"],
+            bump,
+            space = 8+72,
+        )]
         pub candidate: Account<'info, VoteList>,
+        #[account(mut)]
+        pub creator: Signer<'info>,
+        pub system_program: Program<'info, System>,
     }
     #[derive(Accounts)]
     #[instruction(numberofvoice:u64)]
     pub struct Vote<'info> {
         #[account(mut,
-        seeds = [b"vote-list".candidatename.as_key()],
+        seeds = [b"vote-list",candidate.candidatename.as_ref()],
         bump = candidate.bump
         )]
         pub candidate: Account<'info, VoteList>,
     }
 
     #[account]
+    #[derive(InitSpace)]
     pub struct VoteList {
         #[max_len(50)]
         pub candidatename: String,
+        pub candidatepubkey: Pubkey,
         pub candidatevoices: u64,
         pub bump: u8,
     }
