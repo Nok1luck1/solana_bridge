@@ -26,14 +26,7 @@ pub mod test {
         counter.count -= amount;
         Ok(())
     }
-    pub fn initcandidate(ctx: Context<InitCandidate>) -> Result<()> {
-        Ok(())
-    }
-    pub fn vote(ctx: Context<Vote>, voices: u64) -> Result<()> {
-        let candidate = &mut ctx.accounts.candidate;
-        candidate.candidatevoices = voices;
-        Ok(())
-    }
+
     ////fucntion signature
     #[derive(Accounts)]
 
@@ -67,39 +60,6 @@ pub mod test {
     #[account]
     pub struct CounterAcc {
         pub count: u64,
-        pub bump: u8,
-    }
-    #[derive(Accounts)]
-    pub struct InitCandidate<'info> {
-        #[account(
-            init,
-            payer = creator,
-            seeds = [b"vote-list"],
-            bump,
-            space = 8+72,
-        )]
-        pub candidate: Account<'info, VoteList>,
-        #[account(mut)]
-        pub creator: Signer<'info>,
-        pub system_program: Program<'info, System>,
-    }
-    #[derive(Accounts)]
-    #[instruction(numberofvoice:u64)]
-    pub struct Vote<'info> {
-        #[account(mut,
-        seeds = [b"vote-list",candidate.candidatename.as_ref()],
-        bump = candidate.bump
-        )]
-        pub candidate: Account<'info, VoteList>,
-    }
-
-    #[account]
-    #[derive(InitSpace)]
-    pub struct VoteList {
-        #[max_len(50)]
-        pub candidatename: String,
-        pub candidatepubkey: Pubkey,
-        pub candidatevoices: u64,
         pub bump: u8,
     }
 }
