@@ -33,7 +33,7 @@ pub mod test {
     pub struct Initialize<'info> {
         #[account(init,
             payer = authority,
-            space = 16+1,
+            space = 24+8,
             seeds = [b"counter-acc"],
             bump
         )]
