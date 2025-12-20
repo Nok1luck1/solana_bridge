@@ -1,9 +1,8 @@
 #![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
-
+pub mod pair;
+pub use pair::*;
 declare_id!("BGveEuTKJLqVRJc9sWaX3fjvhYGWesjsyXEe24nVVizA");
-
-//const ADMIN_PUBKEY: Pubkey = pubkey!("DsqQPGmhhySWUFaWDEDVifLGUfe3DwnZ7MnVJcNW5Ykv");
 
 #[program]
 pub mod test {
