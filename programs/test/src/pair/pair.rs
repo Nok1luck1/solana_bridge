@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token::{TransferChecked, transfer_checked}, token_interface::{Mint, TokenAccount, TokenInterface}};
-
-
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{transfer_checked, TransferChecked},
+    token_interface::{Mint, TokenAccount, TokenInterface},
+};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, InitSpace, Eq)]
 pub enum StatusOrder {
@@ -32,15 +34,8 @@ pub struct OrderId {
     pub bump: u8,
 }
 #[derive(Accounts)]
+#[instruction(id:u64)]
 pub struct OrderInfo<'info> {
-    #[account(
-        init_if_needed,
-        payer = maker,
-        space = 8 + OrderId::INIT_SPACE,
-        seeds = [b"orderid"],
-        bump    
-)]
-    pub orderid: Account<'info, OrderId>,
     #[account(mut)]
     pub maker: Signer<'info>,
     #[account(mint::token_program = token_program)]
@@ -56,7 +51,7 @@ pub struct OrderInfo<'info> {
         init,
         space = 8 + Order::INIT_SPACE,
         payer = maker,
-        seeds = [b"order",maker.key().as_ref(),orderid.counter.to_le_bytes().as_ref()],
+        seeds = [b"order",maker.key().as_ref(),id.to_le_bytes().as_ref()],
         bump
     )]
     pub order: Account<'info, Order>,
@@ -73,9 +68,9 @@ pub struct OrderInfo<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn create_order(ctx: Context<OrderInfo>, amount: u64) -> Result<()> {
+pub fn create_order(ctx: Context<OrderInfo>, id: u64, amount: u64) -> Result<()> {
     ctx.accounts.order.set_inner(Order {
-        id:ctx.accounts.orderid.counter,
+        id: id,
         maker: ctx.accounts.maker.key(),
         token0: ctx.accounts.token0.key(),
         token1: ctx.accounts.order.token1.clone(),
@@ -83,8 +78,9 @@ pub fn create_order(ctx: Context<OrderInfo>, amount: u64) -> Result<()> {
         token0amount: ctx.accounts.order.token0amount,
         token1amount: ctx.accounts.order.token1amount,
         status: StatusOrder::CREATED,
-        bump: ctx.bumps.order });
-   
+        bump: ctx.bumps.order,
+    });
+
     let _ = transfer_tokens(
         &ctx.accounts.token_maker_account0,
         &ctx.accounts.token_vault,

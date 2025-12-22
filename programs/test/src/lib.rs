@@ -40,6 +40,13 @@ pub mod test {
         #[account(mut)]
         pub authority: Signer<'info>,
         pub system_program: Program<'info, System>,
+        #[account(init,
+        payer = authority,
+        space = 8 + OrderId::INIT_SPACE,
+        seeds = [b"orderid"],
+        bump
+        )]
+        pub orderid: Account<'info, OrderId>,
     }
     //function signature
     #[derive(Accounts)]
