@@ -1,12 +1,7 @@
 use anchor_lang::prelude::*;
+use anchor_spl::{associated_token::AssociatedToken, token::{TransferChecked, transfer_checked}, token_interface::{Mint, TokenAccount, TokenInterface}};
 
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{transfer_checked, TransferChecked},
-    token_interface::{Mint, TokenAccount, TokenInterface},
-};
 
-// use super::event;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, InitSpace, Eq)]
 pub enum StatusOrder {
@@ -39,11 +34,11 @@ pub struct OrderId {
 #[derive(Accounts)]
 pub struct OrderInfo<'info> {
     #[account(
-    init_if_needed,
-    payer = maker,
-    space = 8 + OrderId::INIT_SPACE,
-    seeds = [b"orderid"],
-    bump    
+        init_if_needed,
+        payer = maker,
+        space = 8 + OrderId::INIT_SPACE,
+        seeds = [b"orderid"],
+        bump    
 )]
     pub orderid: Account<'info, OrderId>,
     #[account(mut)]
@@ -52,9 +47,9 @@ pub struct OrderInfo<'info> {
     pub token0: InterfaceAccount<'info, Mint>,
     #[account(
         mut,
-    associated_token::mint = token0,
-    associated_token::authority = maker,
-    associated_token::token_program = token_program
+        associated_token::mint = token0,
+        associated_token::authority = maker,
+        associated_token::token_program = token_program
 )]
     pub token_maker_account0: InterfaceAccount<'info, TokenAccount>,
     #[account(
@@ -64,7 +59,7 @@ pub struct OrderInfo<'info> {
         seeds = [b"order",maker.key().as_ref(),orderid.counter.to_le_bytes().as_ref()],
         bump
     )]
-    order: Account<'info, Order>,
+    pub order: Account<'info, Order>,
     #[account(
         init,
         payer = maker,
@@ -78,34 +73,44 @@ pub struct OrderInfo<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-// pub fn create_order(ctx: &Context<OrderInfo>, amount: u64) -> Result<()> {
-//     let _ = transfer_tokens(
-//         &ctx.accounts.token_maker_account0,
-//         &ctx.accounts.token_vault,
-//         &amount,
-//         &ctx.accounts.token0,
-//         &ctx.accounts.maker,
-//         &ctx.accounts.token_program,
-//     );
-//     emit!(event::OrderCreated {});
-//     Ok(())
-// }
+pub fn create_order(ctx: Context<OrderInfo>, amount: u64) -> Result<()> {
+    ctx.accounts.order.set_inner(Order {
+        id:ctx.accounts.orderid.counter,
+        maker: ctx.accounts.maker.key(),
+        token0: ctx.accounts.token0.key(),
+        token1: ctx.accounts.order.token1.clone(),
+        receiver: ctx.accounts.order.receiver.clone(),
+        token0amount: ctx.accounts.order.token0amount,
+        token1amount: ctx.accounts.order.token1amount,
+        status: StatusOrder::CREATED,
+        bump: ctx.bumps.order });
+   
+    let _ = transfer_tokens(
+        &ctx.accounts.token_maker_account0,
+        &ctx.accounts.token_vault,
+        &amount,
+        &ctx.accounts.token0,
+        &ctx.accounts.maker,
+        &ctx.accounts.token_program,
+    );
+    Ok(())
+}
 
-// pub fn transfer_tokens<'info>(
-//     from: &InterfaceAccount<'info, TokenAccount>,
-//     to: &InterfaceAccount<'info, TokenAccount>,
-//     amount: &u64,
-//     mint: &InterfaceAccount<'info, Mint>,
-//     authority: &Signer<'info>,
-//     token_program: &Interface<'info, TokenInterface>,
-// ) -> Result<()> {
-//     let transfer_accounts_options = TransferChecked {
-//         from: from.to_account_info(),
-//         mint: mint.to_account_info(),
-//         to: to.to_account_info(),
-//         authority: authority.to_account_info(),
-//     };
+pub fn transfer_tokens<'info>(
+    from: &InterfaceAccount<'info, TokenAccount>,
+    to: &InterfaceAccount<'info, TokenAccount>,
+    amount: &u64,
+    mint: &InterfaceAccount<'info, Mint>,
+    authority: &Signer<'info>,
+    token_program: &Interface<'info, TokenInterface>,
+) -> Result<()> {
+    let transfer_accounts_options = TransferChecked {
+        from: from.to_account_info(),
+        mint: mint.to_account_info(),
+        to: to.to_account_info(),
+        authority: authority.to_account_info(),
+    };
 
-//     let cpi_context = CpiContext::new(token_program.to_account_info(), transfer_accounts_options);
-//     transfer_checked(cpi_context, *amount, mint.decimals)
-// }
+    let cpi_context = CpiContext::new(token_program.to_account_info(), transfer_accounts_options);
+    transfer_checked(cpi_context, *amount, mint.decimals)
+}
