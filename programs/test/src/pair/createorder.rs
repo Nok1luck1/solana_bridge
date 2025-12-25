@@ -1,40 +1,44 @@
-//use crate::order;
+use crate::{test::Vault, Order};
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{Mint, Token, TokenAccount},
-};
-
-use crate::Order;
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 #[derive(Accounts)]
-#[instruction(id:u64)]
+
 pub struct CreateOrder<'info> {
     #[account(mut)]
-    pub maker: Signer<'info>,
+    pub user: Signer<'info>,
     #[account(
-            mut,
-            associated_token::mint = token0mint,
-            associated_token::authority = maker,
-    )]
-    pub token_maker_account0: Account<'info, TokenAccount>,
+        seeds = [b"vault",vault.owner.key().as_ref()],
+        bump = vault.bump)]
+    pub vault: Account<'info, Vault>,
     #[account(
         init,
         space = 8 + Order::INIT_SPACE,
-        payer = maker,
-        seeds = [b"order",maker.key().as_ref(),id.to_le_bytes().as_ref()],
+        payer = user,
+        seeds = [b"order",user.key().as_ref(),id.to_le_bytes().as_ref()],
         bump
     )]
     pub order: Account<'info, Order>,
     #[account(
-        init_if_needed,
-        payer = maker,
-        associated_token::mint = token0mint,
-        associated_token::authority = order,
-)]
-    pub token0mint: Account<'info, Mint>,
-    pub token_program0: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
+        mint::token_program = token_program
+    )]
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        mut,
+        token::mint = mint,
+        token::authority = vault,
+        token::token_program = token_program
+    )]
+    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        mut,
+        token::mint = mint,
+        token::authority = user,
+        token::token_program = token_program
+    )]
+    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Interface<'info, TokenInterface>,
+    pub system_account: Program<'info, System>,
 }
 
 // // pub fn create_order(ctx: Context<CreateOrder>, id: u64) -> Result<()> {

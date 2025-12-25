@@ -10,19 +10,20 @@ pub mod test {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        let counter = &mut ctx.accounts.counter;
-        counter.bump = ctx.bumps.counter;
-        counter.count = 586786;
+        let vault = &mut ctx.accounts.vault;
+        vault.bump = ctx.bumps.vault;
+        vault.owner = ctx.accounts.authority.key();
+        vault.count_orders = 0;
         Ok(())
     }
-    pub fn increase(ctx: Context<CounterChange>, amount: u64) -> Result<()> {
-        let counter = &mut ctx.accounts.counter;
-        counter.count += amount;
+    pub fn increase(ctx: Context<VaultChange>, amount: u64) -> Result<()> {
+        let vault = &mut ctx.accounts.vault;
+        vault.count_orders += amount;
         Ok(())
     }
-    pub fn decrease(ctx: Context<CounterChange>, amount: u64) -> Result<()> {
-        let counter = &mut ctx.accounts.counter;
-        counter.count -= amount;
+    pub fn decrease(ctx: Context<VaultChange>, amount: u64) -> Result<()> {
+        let vault = &mut ctx.accounts.vault;
+        vault.count_orders -= amount;
         Ok(())
     }
 
@@ -30,42 +31,34 @@ pub mod test {
     #[derive(Accounts)]
 
     pub struct Initialize<'info> {
-        #[account(init,
+        #[account(
+            init,
             payer = authority,
-            space = 24+8,
+            space = 8 + Vault::INIT_SPACE,
             seeds = [b"counter-acc"],
             bump
         )]
-        pub counter: Account<'info, CounterAcc>,
+        pub vault: Account<'info, Vault>,
         #[account(mut)]
         pub authority: Signer<'info>,
         pub system_program: Program<'info, System>,
-        #[account(init,
-        payer = authority,
-        space = 8 + OrderId::INIT_SPACE,
-        seeds = [b"orderid"],
-        bump
-        )]
-        pub orderid: Account<'info, OrderId>,
     }
     //function signature
     #[derive(Accounts)]
-    #[instruction(amount:u64)]
-    pub struct CounterChange<'info> {
+    pub struct VaultChange<'info> {
         #[account(
             mut,
-            seeds = [b"counter-acc"],
-            bump = counter.bump,
-            constraint = counter.count >= amount || amount == 0,
-            constraint = amount <= 1000,
-            constraint = amount > 0,
+            seeds = [b"vault"],
+            bump = vault.bump
         )]
-        pub counter: Account<'info, CounterAcc>,
+        pub vault: Account<'info, Vault>,
     }
 
     #[account]
-    pub struct CounterAcc {
-        pub count: u64,
+    #[derive(InitSpace)]
+    pub struct Vault {
+        pub count_orders: u64,
+        pub owner: Pubkey,
         pub bump: u8,
     }
 }
