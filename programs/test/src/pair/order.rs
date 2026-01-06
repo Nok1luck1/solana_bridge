@@ -18,6 +18,8 @@ pub struct Order {
     pub token1amount: u64,
     pub status: StatusOrder,
     pub bump: u8,
+    pub timestart: i64,
+    pub timeend: i64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, InitSpace, Eq)]

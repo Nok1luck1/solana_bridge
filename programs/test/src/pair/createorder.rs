@@ -45,6 +45,11 @@ pub struct CreateOrder<'info> {
         bump
     )]
     pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        seeds = [b"vault_authority"],
+        bump
+    )]
+    pub vault_authority: UncheckedAccount<'info>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
@@ -78,6 +83,7 @@ pub fn create_order(
     order.token1amount = _token1amount;
     order.status = StatusOrder::CREATED;
     order.bump = ctx.bumps.order;
+    order.timestart = Clock::get()?.unix_timestamp;
 
     order_id.counter = order_id
         .counter
