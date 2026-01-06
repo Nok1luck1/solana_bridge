@@ -1,10 +1,10 @@
 use super::ErrorCode;
-use crate::{transfer_tokens, Order, OrderId, StatusOrder};
+use crate::{Order, OrderId, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 #[derive(Accounts)]
-pub struct ExecuteOrderFromAnotherChain<'info> {
+pub struct ExecuteOrder<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
@@ -38,4 +38,22 @@ pub struct ExecuteOrderFromAnotherChain<'info> {
     pub vault_authority: UncheckedAccount<'info>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
+}
+pub fn execute_order(
+    ctx: Context<ExecuteOrder>,
+    _token0amount: u64,
+    _token1amount: u64,
+    _token0: String,
+    _sender: String,
+    _timestart: i64,
+) -> Result<()> {
+    let order = &mut ctx.accounts.order;
+    let order_id = &mut ctx.accounts.order_id;
+
+    require!(_token0amount > 0, ErrorCode::ZeroAmountError);
+    require!(_token1amount > 0, ErrorCode::ZeroAmountError);
+    require!(_token0.len() == 20, ErrorCode::AddressLengthError);
+    require!(_sender.len() == 20, ErrorCode::AddressLengthError);
+    require!(order_id.counter > 0, ErrorCode::InsufficientFundsError);
+    Ok(())
 }

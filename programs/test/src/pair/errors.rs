@@ -10,4 +10,6 @@ pub enum ErrorCode {
     ZeroAmountError,
     #[msg("Wrong ethereum address format")]
     AddressLengthError,
+    #[msg("Insufficient funds")]
+    InsufficientFundsError,
 }
