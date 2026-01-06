@@ -1,4 +1,5 @@
-use crate::{test::Vault, Order, OrderId};
+use super::ErrorCode;
+use crate::{transfer_tokens, Order, OrderId, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
@@ -48,26 +49,47 @@ pub struct CreateOrder<'info> {
     pub system_program: Program<'info, System>,
 }
 
-// // pub fn create_order(ctx: Context<CreateOrder>, id: u64) -> Result<()> {
-// //     ctx.accounts.order.set_inner(Order {
-// //         id: id,
-// //         maker: ctx.accounts.maker.key(),
-// //         token0: ctx.accounts.token0.key(),
-// //         token1: ctx.accounts.order.token1.clone(),
-// //         receiver: ctx.accounts.order.receiver.clone(),
-// //         token0amount: ctx.accounts.order.token0amount,
-// //         token1amount: ctx.accounts.order.token1amount,
-// //         status: order::StatusOrder::CREATED,
-// //         bump: ctx.bumps.order,
-// //     });
+pub fn create_order(
+    ctx: Context<CreateOrder>,
+    _token1: String,
+    _receiver: String,
+    _token0amount: u64,
+    _token1amount: u64,
+) -> Result<()> {
+    let order = &mut ctx.accounts.order;
+    let order_id = &mut ctx.accounts.order_id;
 
-// //     let _ = transfer_tokens(
-// //         &ctx.accounts.token_maker_account0,
-// //         &ctx.accounts.token_vault,
-// //         &ctx.accounts.order.token0amount,
-// //         &ctx.accounts.token0,
-// //         &ctx.accounts.maker,
-// //         &ctx.accounts.token_program0,
-// //     );
-// //     Ok(())
-// // }
+    require!(_token0amount > 0, ErrorCode::ZeroAmountError);
+
+    require!(_token1amount > 0, ErrorCode::ZeroAmountError);
+    require!(_token1.len() == 20, ErrorCode::AddressLengthError);
+    require!(_receiver.len() == 20, ErrorCode::AddressLengthError);
+
+    if order_id.counter == 0 {
+        order_id.counter = 1;
+        order_id.bump = ctx.bumps.order_id;
+    }
+    order.id = order_id.counter;
+    order.maker = ctx.accounts.user.key();
+    order.token0 = ctx.accounts.token_0_mint.key();
+    order.token1 = _token1;
+    order.receiver = _receiver;
+    order.token0amount = _token0amount;
+    order.token1amount = _token1amount;
+    order.status = StatusOrder::CREATED;
+    order.bump = ctx.bumps.order;
+
+    order_id.counter = order_id
+        .counter
+        .checked_add(1)
+        .ok_or(ErrorCode::OveflowError)?;
+    transfer_tokens(
+        &ctx.accounts.maker_token_account,
+        &ctx.accounts.vault_token_account,
+        &_token0amount,
+        &ctx.accounts.token_0_mint,
+        &ctx.accounts.user,
+        &ctx.accounts.token_program,
+    )?;
+    Ok(())
+}
