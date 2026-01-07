@@ -1,5 +1,5 @@
 use super::ErrorCode;
-use crate::{transfer_tokens, Order, OrderId, StatusOrder};
+use crate::{transfer_tokens, Order, OrderCreated, OrderId, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
@@ -97,5 +97,14 @@ pub fn create_order(
         &ctx.accounts.user,
         &ctx.accounts.token_program,
     )?;
+    emit!(OrderCreated {
+        timecreation: order.timestart,
+        token0: order.token0,
+        token1: order.token1.clone(),
+        amount0: order.token0amount,
+        amount1: order.token1amount,
+        sender: order.maker,
+        receiver: order.receiver.clone()
+    });
     Ok(())
 }
