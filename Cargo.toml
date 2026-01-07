@@ -1,5 +1,5 @@
 [workspace]
-members = [
+members = [ "actix-bridge/hello-world",
     "programs/*"
 ]
 resolver = "2"
