@@ -8,16 +8,19 @@ use alloy::providers::ProviderBuilder;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let bnbprovider = ProviderBuilder::new()
-        .connect(eth::constant::bnbprovideraddr)
+    let provider = ProviderBuilder::new()
+        .connect("https://bsc-dataseed.binance.org/")
         .await
-        .ok();
+        .expect("Failed to connect to BSC");
+
+    let provider_data = web::Data::new(provider);
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(bnbprovider.clone()))
-            .service(routes::get_latest_block)
+            .app_data(provider_data.clone()) // Клонируется только Arc
+            .route("/block", web::get().to(get_block))
+            .route("/balance/{address}", web::get().to(get_balance))
     })
-    .bind(("127.0.0.1", 8090))?
+    .bind(("127.0.0.1", 8080))?
     .run()
     .await
 }

@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 actix-web = "4"
 alloy = { version = "1.0.41", features = ["providers"] }
+tokio = { version = "1", features = ["sync"] }
