@@ -6,6 +6,8 @@ pub mod solana;
 use actix_web::{App, HttpServer, web};
 use alloy::providers::ProviderBuilder;
 
+use crate::routes::get_block;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let provider = ProviderBuilder::new()
@@ -15,9 +17,9 @@ async fn main() -> std::io::Result<()> {
 
     let provider_data = web::Data::new(provider);
     HttpServer::new(move || {
-        App::new().app_data(provider_data.clone()) // Клонируется только Arc
-        // .route("/block", web::get().to(get_block))
-        // .route("/balance/{address}", web::get().to(get_balance))
+        App::new()
+            .app_data(provider_data.clone())
+            .service(get_block)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
