@@ -2,12 +2,10 @@ pub mod eth;
 pub mod routes;
 pub mod solana;
 
-use std::env;
-
 use actix_web::{App, HttpServer, web};
 use alloy::{providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
-use crate::routes::get_block;
+use crate::{eth::check_allowance, routes::get_block};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -25,6 +23,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(provider_data.clone())
             .service(get_block)
+            .service(check_allowance)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
