@@ -1,17 +1,22 @@
-pub(crate) mod constants;
 pub mod eth;
 pub mod routes;
 pub mod solana;
 
+use std::env;
+
 use actix_web::{App, HttpServer, web};
-use alloy::providers::ProviderBuilder;
+use alloy::{providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
 use crate::routes::get_block;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let provider_end_point = std::env::var("PROVIDER_BNB_ENDPOINT").expect("PROVIDER DID NOT SET");
+    let private_key = std::env::var("PRIVATE_KEY_BNB").expect("private missing");
+    let signer: PrivateKeySigner = private_key.parse().expect("private key parse error");
     let provider = ProviderBuilder::new()
-        .connect("https://bsc-dataseed.binance.org/")
+        .wallet(signer)
+        .connect(provider_end_point.as_str())
         .await
         .expect("Failed to connect to BSC");
 

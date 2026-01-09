@@ -102,4 +102,7 @@ contract Bridge is AccessControl {
         orderByIndex[orderId] = order;
         emit OrderExecuted(orderId);
     }
+    function getOrderInfo(bytes32 orderID) public view returns(Order memory){
+        return orderByIndex[orderID];
+    }
 }
