@@ -1,31 +1,47 @@
-use std::{env, str::FromStr};
-
-use actix_web::{HttpResponse, Responder, body::MessageBody, get, web};
 use alloy::{
-    primitives::{Address, address},
+    primitives::{Address, U256},
     providers::{
-        Identity, Provider, ProviderBuilder, RootProvider,
+        Identity, RootProvider,
         fillers::{BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller},
     },
+    rpc::types::Log,
 };
+use std::error::Error;
+use std::str::FromStr;
+use tracing::error;
 
-#[get("/execute")]
-async fn get_block(
-    provider: web::Data<
-        FillProvider<
-            JoinFill<
-                Identity,
-                JoinFill<GasFiller, JoinFill<BlobGasFiller, JoinFill<NonceFiller, ChainIdFiller>>>,
+use crate::eth::{Bridge, check_balance};
+
+pub async fn distribute_reward(
+    token_to_distribute: Address,
+    amount_to_distribute: U256,
+    provider: alloy::providers::fillers::FillProvider<
+        alloy::providers::fillers::JoinFill<
+            alloy::providers::fillers::JoinFill<
+                alloy::providers::Identity,
+                alloy::providers::fillers::JoinFill<
+                    alloy::providers::fillers::GasFiller,
+                    alloy::providers::fillers::JoinFill<
+                        alloy::providers::fillers::BlobGasFiller,
+                        alloy::providers::fillers::JoinFill<
+                            alloy::providers::fillers::NonceFiller,
+                            alloy::providers::fillers::ChainIdFiller,
+                        >,
+                    >,
+                >,
             >,
-            RootProvider,
+            alloy::providers::fillers::WalletFiller<alloy::network::EthereumWallet>,
         >,
+        alloy::providers::RootProvider,
     >,
-) -> HttpResponse {
+) -> Result<(), Box<dyn Error>> {
     let addr = std::env::var("CONTRACT_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
-
-    match provider.get_block_number().await {
-        Ok(block) => HttpResponse::Ok().body(format!("Current block: {}", block)),
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error: {}", e)),
+    let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
+    let current_available_balance: U256 = check_balance(token_to_distribute, &provider).await?;
+    if current_available_balance < amount_to_distribute {
+        error!("Bridge does not have specific amount to distribute");
+        std::process::exit(1);
     }
+    Ok(())
 }

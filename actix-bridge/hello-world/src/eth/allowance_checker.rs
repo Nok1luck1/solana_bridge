@@ -1,31 +1,39 @@
-use actix_web::{HttpResponse, Responder, body::MessageBody, get, web};
+use crate::eth::ERC20;
 use alloy::{
-    primitives::Address,
+    primitives::{Address, U256},
     providers::{
         Identity, Provider, RootProvider,
         fillers::{BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller},
     },
+    signers::k256::elliptic_curve::bigint,
 };
+use std::{error::Error, str::FromStr};
 
-use crate::eth::ERC20;
-
-#[get("/check_allowance")]
-async fn check_allowance(
+pub async fn check_balance(
     token_addr: Address,
-    provider: web::Data<
-        FillProvider<
-            JoinFill<
-                Identity,
-                JoinFill<GasFiller, JoinFill<BlobGasFiller, JoinFill<NonceFiller, ChainIdFiller>>>,
+    provider: &alloy::providers::fillers::FillProvider<
+        JoinFill<
+            alloy::providers::fillers::JoinFill<
+                alloy::providers::Identity,
+                alloy::providers::fillers::JoinFill<
+                    alloy::providers::fillers::GasFiller,
+                    alloy::providers::fillers::JoinFill<
+                        alloy::providers::fillers::BlobGasFiller,
+                        alloy::providers::fillers::JoinFill<
+                            alloy::providers::fillers::NonceFiller,
+                            alloy::providers::fillers::ChainIdFiller,
+                        >,
+                    >,
+                >,
             >,
-            RootProvider,
+            alloy::providers::fillers::WalletFiller<alloy::network::EthereumWallet>,
         >,
+        alloy::providers::RootProvider,
     >,
-) -> HttpResponse {
-    let token = ERC20::new(token_addr, provider.clone());
-
-    match provider.get_block_number().await {
-        Ok(block) => HttpResponse::Ok().body(format!("Current block: {}", block)),
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error: {}", e)),
-    }
+) -> Result<U256, Box<dyn Error>> {
+    let token = ERC20::new(token_addr, provider);
+    let addr = std::env::var("CONTRACT_ADDR").expect("Contract addr must be set in .env");
+    let contract_address = Address::from_str(addr.as_str());
+    let bridge_balance = token.balanceOf(contract_address.unwrap()).call().await?;
+    Ok(bridge_balance)
 }

@@ -1,14 +1,13 @@
 pub mod eth;
-pub mod routes;
 pub mod solana;
+use std::error::Error;
+use std::str::FromStr;
 
-use actix_web::{App, HttpServer, web};
-use alloy::{providers::ProviderBuilder, signers::local::PrivateKeySigner};
+use alloy::{primitives::Address, providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
-use crate::{eth::check_allowance, routes::get_block};
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    tracing_subscriber::fmt::init();
     let provider_end_point = std::env::var("PROVIDER_BNB_ENDPOINT").expect("PROVIDER DID NOT SET");
     let private_key = std::env::var("PRIVATE_KEY_BNB").expect("private missing");
     let signer: PrivateKeySigner = private_key.parse().expect("private key parse error");
@@ -18,14 +17,9 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to connect to BSC");
 
-    let provider_data = web::Data::new(provider);
-    HttpServer::new(move || {
-        App::new()
-            .app_data(provider_data.clone())
-            .service(get_block)
-            .service(check_allowance)
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+    let token_addr = std::env::var("TOKEN_BNB_ADDRESS").expect("Contract addr must be set in .env");
+    let token_address = Address::from_str(token_addr.as_str());
+    let result1 = eth::allowance_checker::check_balance(token_address.unwrap(), &provider);
+
+    Ok(())
 }
