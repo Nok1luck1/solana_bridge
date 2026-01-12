@@ -13,7 +13,11 @@ use tracing::error;
 use crate::eth::{Bridge, check_balance};
 
 pub async fn distribute_reward(
+    address_receiver: Address,
+    token_deposited: String,
     token_to_distribute: Address,
+    address_sender: String,
+    amount_deposited: u64,
     amount_to_distribute: U256,
     provider: alloy::providers::fillers::FillProvider<
         alloy::providers::fillers::JoinFill<
@@ -43,5 +47,15 @@ pub async fn distribute_reward(
         error!("Bridge does not have specific amount to distribute");
         std::process::exit(1);
     }
+    let disctribute_token = bridge_contract.distributeReward(
+        address_receiver,
+        token_deposited,
+        token_to_distribute,
+        address_sender,
+        U256::from(amount_deposited),
+        U256::from(amount_to_distribute),
+    );
+    let distribute_tx = disctribute_token.send().await?;
+    //let receipt = &disctribute_tx.get_receipt().await?;
     Ok(())
 }

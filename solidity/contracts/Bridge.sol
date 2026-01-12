@@ -73,7 +73,7 @@ contract Bridge is AccessControl {
         string memory sender,
         uint256 amount0,
         uint256 amount1
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bytes32 orderId) {
         uint256 balanceTokenForReward = IERC20(token1).balanceOf(address(this));
         require(
             balanceTokenForReward >= amount1,
@@ -90,7 +90,7 @@ contract Bridge is AccessControl {
             orderStatus: StatusOrder.Initialized,
             orderType: OrderType.FromEVMtoSol
         });
-        bytes32 orderId = keccak256(
+        orderId = keccak256(
             abi.encodePacked(
                 order.user,
                 order.timestamp,
@@ -102,7 +102,7 @@ contract Bridge is AccessControl {
         orderByIndex[orderId] = order;
         emit OrderExecuted(orderId);
     }
-    function getOrderInfo(bytes32 orderID) public view returns(Order memory){
+    function getOrderInfo(bytes32 orderID) public view returns (Order memory) {
         return orderByIndex[orderID];
     }
 }

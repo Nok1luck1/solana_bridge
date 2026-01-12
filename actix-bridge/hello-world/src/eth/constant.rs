@@ -20,7 +20,7 @@ sol! {
         Completed,
         Canceled
     }
-           struct Order {
+    struct Order {
         address user;
         address token0;
         uint amount0;
@@ -31,8 +31,10 @@ sol! {
         StatusOrder orderStatus;
         OrderType orderType;
     }
+        event OrderCreated(bytes32 orderId);
         function balanceOf(address owner) public view returns (uint256);
         function allowance(address owner,address spender) public view returns(uint256);
         function getOrderInfo(bytes32 orderID) public view returns(Order memory);
+        function distributeReward(address receiver,string memory _token0,address token1,string memory sender,uint256 amount0,uint256 amount1) public returns (bytes32 orderId);
    }
 }
