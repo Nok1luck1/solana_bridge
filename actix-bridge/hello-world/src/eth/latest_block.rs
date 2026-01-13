@@ -6,11 +6,9 @@ use alloy::{
         fillers::{BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller},
     },
 };
-use std::{error::Error, str::FromStr};
+use std::{env::current_exe, error::Error, str::FromStr};
 
-pub async fn scan_for_orders(
-    block_start: u64,
-    block_latest: u64,
+pub async fn latest_block(
     provider: &alloy::providers::fillers::FillProvider<
         JoinFill<
             alloy::providers::fillers::JoinFill<
@@ -30,21 +28,7 @@ pub async fn scan_for_orders(
         >,
         alloy::providers::RootProvider,
     >,
-) -> Result<(), Box<dyn Error>> {
-    let addr = std::env::var("CONTRACT_ADDR").expect("Contract addr must be set in .env");
-    let contract_address = Address::from_str(addr.as_str());
-    let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
-    let events = bridge_contract
-        .OrderCreated_filter()
-        .from_block(block_start)
-        .to_block(block_latest)
-        .query()
-        .await?;
-    for (event, log) in events {
-        println!(
-            "Orderid : {:?}, in Block : {:?},in timestamp: {:?}",
-            event.orderId, log.block_number, log.block_timestamp
-        );
-    }
-    Ok(())
+) -> Result<u64, Box<dyn Error>> {
+    let current_block = provider.get_block_number().await?;
+    Ok(current_block)
 }

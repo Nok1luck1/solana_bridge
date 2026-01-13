@@ -4,7 +4,6 @@ use alloy::{
         Identity, RootProvider,
         fillers::{BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller},
     },
-    rpc::types::Log,
 };
 use std::error::Error;
 use std::str::FromStr;

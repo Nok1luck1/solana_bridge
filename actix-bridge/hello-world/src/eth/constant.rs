@@ -1,4 +1,4 @@
-use alloy::{primitives::address, providers::ProviderBuilder, sol};
+use alloy::sol;
 
 sol! {
    // The `rpc` attribute enables contract interaction via the provider.
