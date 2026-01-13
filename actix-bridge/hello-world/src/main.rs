@@ -5,6 +5,8 @@ use std::str::FromStr;
 
 use alloy::{primitives::Address, providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
+use crate::eth::latest_block;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt::init();
@@ -20,6 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let token_addr = std::env::var("TOKEN_BNB_ADDRESS").expect("Contract addr must be set in .env");
     let token_address = Address::from_str(token_addr.as_str());
     let result1 = eth::allowance_checker::check_balance(token_address.unwrap(), &provider);
+    let latest_block = eth::latest_block(&provider);
 
     Ok(())
 }
