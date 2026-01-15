@@ -35,6 +35,7 @@ pub struct ExecuteOrder<'info> {
         seeds = [b"vault_authority"],
         bump
     )]
+    /// CHECK: PDA authority for vault, derived from seeds. No data deserialization needed
     pub vault_authority: UncheckedAccount<'info>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -55,6 +56,6 @@ pub fn execute_order(
     require!(_token0.len() == 20, ErrorCode::AddressLengthError);
     require!(_sender.len() == 20, ErrorCode::AddressLengthError);
     require!(_order_id.counter > 0, ErrorCode::InsufficientFundsError);
-
+    _order.status = StatusOrder::COMPLETED;
     Ok(())
 }

@@ -49,6 +49,7 @@ pub struct CreateOrder<'info> {
         seeds = [b"vault_authority"],
         bump
     )]
+    /// CHECK: PDA authority for vault, derived from seeds. No data deserialization needed
     pub vault_authority: UncheckedAccount<'info>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,

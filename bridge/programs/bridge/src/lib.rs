@@ -2,10 +2,10 @@
 use anchor_lang::prelude::*;
 pub mod pair;
 pub use pair::*;
-declare_id!("BGveEuTKJLqVRJc9sWaX3fjvhYGWesjsyXEe24nVVizA");
+declare_id!("ERxSBFf5xhxPibsvdTrSSGw5wLZwSs8DmWa5GyWLe7oW");
 
 #[program]
-pub mod test {
+pub mod bridge {
 
     use super::*;
 
