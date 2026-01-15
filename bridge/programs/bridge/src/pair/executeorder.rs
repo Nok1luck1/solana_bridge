@@ -1,5 +1,5 @@
 use super::ErrorCode;
-use crate::{Order, OrderId, StatusOrder};
+use crate::{Order, OrderExecution, OrderId, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
@@ -18,11 +18,11 @@ pub struct ExecuteOrder<'info> {
     #[account(
         init,
         payer = admin,
-        space = Order::INIT_SPACE,
-        seeds = [b"order",admin.key().as_ref(),order_id.counter.to_le_bytes().as_ref()],
+        space = OrderExecution::INIT_SPACE,
+        seeds = [b"order_execution",admin.key().as_ref(),order_id.counter.to_le_bytes().as_ref()],
         bump
     )]
-    pub order: Account<'info, Order>,
+    pub order_execution: Account<'info, OrderExecution>,
     pub token_1_mint: InterfaceAccount<'info, Mint>,
     pub receiver_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
@@ -48,7 +48,7 @@ pub fn execute_order(
     _sender: String,
     _timestart: i64,
 ) -> Result<()> {
-    let _order = &mut ctx.accounts.order;
+    let _order = &mut ctx.accounts.order_execution;
     let _order_id = &mut ctx.accounts.order_id;
 
     require!(_token0amount > 0, ErrorCode::ZeroAmountError);
@@ -56,6 +56,11 @@ pub fn execute_order(
     require!(_token0.len() == 20, ErrorCode::AddressLengthError);
     require!(_sender.len() == 20, ErrorCode::AddressLengthError);
     require!(_order_id.counter > 0, ErrorCode::InsufficientFundsError);
+    _order.id = _order_id.counter;
+    _order.maker = _sender;
+    _order.token0 = _token0;
+
     _order.status = StatusOrder::COMPLETED;
+
     Ok(())
 }
