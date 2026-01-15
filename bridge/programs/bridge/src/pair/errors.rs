@@ -12,4 +12,8 @@ pub enum ErrorCode {
     AddressLengthError,
     #[msg("Insufficient funds")]
     InsufficientFundsError,
+    #[msg("Unauthorized: You are not the maker of this order")]
+    UnauthorizedError,
+    #[msg("Invalid order status: Order must be in CREATED status to cancel")]
+    InvalidOrderStatusError,
 }

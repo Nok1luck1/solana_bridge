@@ -12,3 +12,6 @@ pub use order::*;
 
 pub mod executeorder;
 pub use executeorder::*;
+
+pub mod cancelorder;
+pub use cancelorder::*;

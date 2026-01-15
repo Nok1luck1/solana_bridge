@@ -49,7 +49,9 @@ pub struct CreateOrder<'info> {
         seeds = [b"vault_authority"],
         bump
     )]
-    /// CHECK: PDA authority for vault, derived from seeds. No data deserialization needed
+    /// CHECK: This is a token account that can hold any SPL token.
+    /// We verify it's a valid token account through CPI calls but don't
+    /// deserialize it as Account<TokenAccount> to support multiple token types
     pub vault_authority: UncheckedAccount<'info>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
