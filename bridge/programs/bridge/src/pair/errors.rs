@@ -16,4 +16,14 @@ pub enum ErrorCode {
     UnauthorizedError,
     #[msg("Invalid order status: Order must be in CREATED status to cancel")]
     InvalidOrderStatusError,
+    #[msg("Too many admin here")]
+    TooManyAdmins,
+    #[msg("Already inited")]
+    AlreadyInited,
+    #[msg("Need at least 1 admin")]
+    CannotRemoveLastAdmin,
+    #[msg("UnauthorizedAdmin")]
+    UnauthorizedAdmin,
+    #[msg("ADmin already exist")]
+    AdminAlreadyExists,
 }

@@ -39,7 +39,7 @@ pub struct CreateOrder<'info> {
         init_if_needed,
         payer = user,
         token::mint = token_0_mint,
-        token::authority = order,
+        token::authority = vault_authority,
         token::token_program = token_program,
         seeds = [b"vault",token_0_mint.key().as_ref()],
         bump
