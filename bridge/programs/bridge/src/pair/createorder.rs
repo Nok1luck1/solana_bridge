@@ -68,7 +68,6 @@ pub fn create_order(
     let order_id = &mut ctx.accounts.order_id;
 
     require!(_token0amount > 0, ErrorCode::ZeroAmountError);
-
     require!(_token1amount > 0, ErrorCode::ZeroAmountError);
     require!(_token1.len() == 20, ErrorCode::AddressLengthError);
     require!(_receiver.len() == 20, ErrorCode::AddressLengthError);

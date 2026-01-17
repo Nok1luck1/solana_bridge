@@ -13,36 +13,7 @@ impl AdminConfig {
         self.admins.contains(pubkey)
     }
 }
-// #[derive(Accounts)]
-// pub struct InitializeAdmins<'info> {
-//     #[account(mut)]
-//     pub authority: Signer<'info>,
 
-//     #[account(
-//         init,
-//         payer = authority,
-//         space = 8 + AdminConfig::INIT_SPACE,
-//         seeds = [b"admin_config"],
-//         bump
-//     )]
-//     pub admin_config: Account<'info, AdminConfig>,
-//     pub system_program: Program<'info, System>,
-// }
-
-// pub fn initialize_admins(
-//     ctx: Context<InitializeAdmins>,
-//     initial_admins: Vec<Pubkey>,
-// ) -> Result<()> {
-//     require!(
-//         ctx.accounts.admin_config.settet == false,
-//         ErrorCode::AlreadyInited
-//     );
-//     require!(initial_admins.len() <= 10, ErrorCode::TooManyAdmins);
-//     let admin_config = &mut ctx.accounts.admin_config;
-//     admin_config.admins = initial_admins;
-//     admin_config.bump = ctx.bumps.admin_config;
-//     Ok(())
-// }
 #[derive(Accounts)]
 pub struct ManageAdmins<'info> {
     #[account(mut)]

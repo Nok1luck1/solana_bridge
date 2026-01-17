@@ -1,5 +1,5 @@
 use super::ErrorCode;
-use crate::{transfer_tokens, OrderCompleted, OrderExecution, OrderId, StatusOrder};
+use crate::{transfer_tokens, AdminConfig, OrderCompleted, OrderExecution, OrderId, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
@@ -7,6 +7,12 @@ use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 pub struct ExecuteOrder<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
+    #[account(
+        seeds = [b"admin_config"],
+        bump = admin_config.bump,
+        constraint = admin_config.is_admin(&admin.key()) @ ErrorCode::UnauthorizedAdmin,
+    )]
+    pub admin_config: Account<'info, AdminConfig>,
     #[account(
         init_if_needed,
         payer = admin,
@@ -58,7 +64,10 @@ pub fn execute_order(
     require!(_token1amount > 0, ErrorCode::ZeroAmountError);
     require!(_token0.len() == 20, ErrorCode::AddressLengthError);
     require!(_sender.len() == 20, ErrorCode::AddressLengthError);
-    require!(_order_id.counter > 0, ErrorCode::InsufficientFundsError);
+    if _order_id.counter == 0 {
+        _order_id.counter = 1;
+        _order_id.bump = ctx.bumps.order_id;
+    }
     transfer_tokens(
         &ctx.accounts.vault_token_program,
         &ctx.accounts.receiver_token_account,
@@ -67,10 +76,7 @@ pub fn execute_order(
         &ctx.accounts.vault_authority,
         &ctx.accounts.token_program,
     )?;
-    _order.id = _order_id
-        .counter
-        .checked_add(1)
-        .ok_or(ErrorCode::OveflowError)?;
+    _order.id = _order_id.counter;
     _order.maker = _sender.clone();
     _order.token0 = _token0.clone();
     _order.token1 = ctx.accounts.token_1_mint.key();
@@ -79,6 +85,10 @@ pub fn execute_order(
     _order.token1amount = _token1amount;
     _order.status = StatusOrder::COMPLETED;
     _order.timeend = Clock::get()?.unix_timestamp;
+    _order_id.counter = _order_id
+        .counter
+        .checked_add(1)
+        .ok_or(ErrorCode::OveflowError)?;
     emit!(OrderCompleted {
         timeexecuted: _order.timeend,
         token0: _token0,
