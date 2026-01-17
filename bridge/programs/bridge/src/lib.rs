@@ -9,17 +9,16 @@ pub mod bridge {
 
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize(ctx: Context<AdminConfig>) -> Result<()> {
         Ok(())
     }
-
-    ////fucntion signature
-    #[derive(Accounts)]
-
-    pub struct Initialize<'info> {
-        #[account(mut)]
-        pub authority: Signer<'info>,
-        pub system_program: Program<'info, System>,
-        pub bump: u8,
+    pub fn order_for_transfer(
+        ctx: Context<CreateOrder>,
+        token1: String,
+        receiver: String,
+        token0amount: u64,
+        token1amount: u64,
+    ) -> Result<()> {
+        create_order(ctx, token1, receiver, token0amount, token1amount)
     }
 }
