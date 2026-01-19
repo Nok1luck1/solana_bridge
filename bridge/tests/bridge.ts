@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-const { BN } = anchor;
+import { BN } from "bn.js";
 import {
   TOKEN_2022_PROGRAM_ID,
   type TOKEN_PROGRAM_ID,
@@ -16,11 +16,19 @@ import {
   makeKeypairs,
 } from "@solana-developers/helpers";
 
+console.log("=== FILE LOADED ===");
+
 describe("bridge", async () => {
+  console.log("=== INSIDE DESCRIBE ===");
+  
   const TOKEN_PROGRAM: typeof TOKEN_2022_PROGRAM_ID | typeof TOKEN_PROGRAM_ID =
     TOKEN_2022_PROGRAM_ID;
   
+  console.log("=== TOKEN PROGRAM SET ===");
+  
   const provider = anchor.AnchorProvider.env();
+  console.log("=== PROVIDER CREATED ===");
+  
   anchor.setProvider(provider);
 
   const user = (provider.wallet as anchor.Wallet).payer;
@@ -33,17 +41,16 @@ describe("bridge", async () => {
     tokenProgram: TOKEN_PROGRAM,
     systemProgram: SystemProgram.programId,
   };
-
+  console.log(" 11111111")
   let alice: anchor.web3.Keypair;
   let tokenMintA: anchor.web3.Keypair;
-
   [alice, tokenMintA] = makeKeypairs(2);
+  const tokenAOfferedAmount = new BN("1000000");
+  const tokenBWantedAmount = new BN("1000000");
 
-  const tokenAOfferedAmount = new BN(1_000_000);
-  const tokenBWantedAmount = new BN(1_000_000);
   const SECONDS = 1000;
   const ANCHOR_SLOW_TEST_THRESHOLD = 40 * SECONDS;
-
+  console.log(ANCHOR_SLOW_TEST_THRESHOLD,"ANCHOR_SLOW_TEST_THRESHOLD");
   before(
     "Creates Alice account, token mint, and associated token accounts",
     async () => {
@@ -72,7 +79,7 @@ describe("bridge", async () => {
   );
 
   it("Puts the tokens Alice offers into the vault when Alice makes an order", async () => {
-    // Найти order_id PDA
+   
     const [orderIdPda] = PublicKey.findProgramAddressSync(
       [Buffer.from("order_id")],
       program.programId
@@ -80,13 +87,13 @@ describe("bridge", async () => {
     
     accounts.orderId = orderIdPda;
 
-    // Получить текущий counter (или 0 если аккаунт не существует)
+    
     let currentCounter = new BN(0);
     try {
       const orderIdAccount = await program.account.orderId.fetch(orderIdPda);
       currentCounter = new BN(orderIdAccount.counter);
     } catch (e) {
-      // Аккаунт еще не существует, counter = 0
+      
       currentCounter = new BN(0);
     }
 
@@ -102,7 +109,7 @@ describe("bridge", async () => {
     
     accounts.order = orderPda;
 
-    // Найти vault PDA для этого токена
+   
     const [vaultPda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("vault"),
@@ -113,7 +120,7 @@ describe("bridge", async () => {
     
     accounts.vaultTokenAccount = vaultPda;
 
-    // Найти vault_authority PDA
+
     const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
       [Buffer.from("vault_authority")],
       program.programId
@@ -122,9 +129,10 @@ describe("bridge", async () => {
     accounts.vaultAuthority = vaultAuthorityPda;
 
     // Ethereum адреса (20 байт без 0x префикса)
-    const token1 = "c5c949ffcd5872731A39d9B33812B9a26b275ebd";
-    const receiver = "c5c949ffcd5872731A39d9B33812B9a26b275ebd";
-
+    const token1 = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
+    const receiver = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
+    console.log("token1 length:", token1.length);  // Должно быть 40
+    console.log("receiver length:", receiver.length);  // Должно быть 40
     console.log("Creating order...");
     console.log("Accounts:", {
       user: accounts.user.toString(),
@@ -144,14 +152,19 @@ describe("bridge", async () => {
     tokenBWantedAmount
   )
   .accounts({
-    user: alice.publicKey,
-    token0Mint: tokenMintA.publicKey,
+     user: alice.publicKey,
+    orderId: accounts.orderId,              // ✅ Добавлено
+    order: accounts.order,                   // ✅ Добавлено
+    token0Mint: tokenMintA.publicKey,        // Было token0Mint, вы написали token_0_mint
     makerTokenAccount: accounts.makerTokenAccount,
+    vaultTokenAccount: accounts.vaultTokenAccount,  // ✅ Добавлено
+    vaultAuthority: accounts.vaultAuthority,        // ✅ Добавлено
     tokenProgram: TOKEN_PROGRAM,
+    systemProgram: SystemProgram.programId, 
   })
   .signers([alice])
   .rpc();
-
+  console.log(transactionSignature,"trantransactionSignature")
     await confirmTransaction(connection, transactionSignature);
     console.log("Order created:", transactionSignature);
 

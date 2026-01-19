@@ -69,8 +69,8 @@ pub fn create_order(
 
     require!(_token0amount > 0, ErrorCode::ZeroAmountError);
     require!(_token1amount > 0, ErrorCode::ZeroAmountError);
-    require!(_token1.len() == 20, ErrorCode::AddressLengthError);
-    require!(_receiver.len() == 20, ErrorCode::AddressLengthError);
+    require!(_token1.len() == 42, ErrorCode::AddressLengthError);
+    require!(_receiver.len() == 42, ErrorCode::AddressLengthError);
 
     if order_id.counter == 0 {
         order_id.counter = 1;
