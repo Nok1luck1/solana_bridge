@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { BN } from "bn.js";
 import {
   TOKEN_2022_PROGRAM_ID,
-  type TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
@@ -21,9 +21,9 @@ console.log("=== FILE LOADED ===");
 describe("bridge", async () => {
   console.log("=== INSIDE DESCRIBE ===");
   
-  const TOKEN_PROGRAM: typeof TOKEN_2022_PROGRAM_ID | typeof TOKEN_PROGRAM_ID =
-    TOKEN_2022_PROGRAM_ID;
-  
+  // const TOKEN_PROGRAM: typeof TOKEN_2022_PROGRAM_ID | typeof TOKEN_PROGRAM_ID =
+  //   TOKEN_2022_PROGRAM_ID;
+    const TOKEN_PROGRAM = TOKEN_PROGRAM_ID; 
   console.log("=== TOKEN PROGRAM SET ===");
   
   const provider = anchor.AnchorProvider.env();
@@ -153,12 +153,12 @@ describe("bridge", async () => {
   )
   .accounts({
      user: alice.publicKey,
-    orderId: accounts.orderId,              // ✅ Добавлено
-    order: accounts.order,                   // ✅ Добавлено
-    token0Mint: tokenMintA.publicKey,        // Было token0Mint, вы написали token_0_mint
+    orderId: accounts.orderId,              
+    order: accounts.order,                   
+    token0Mint: tokenMintA.publicKey,        
     makerTokenAccount: accounts.makerTokenAccount,
-    vaultTokenAccount: accounts.vaultTokenAccount,  // ✅ Добавлено
-    vaultAuthority: accounts.vaultAuthority,        // ✅ Добавлено
+    vaultTokenAccount: accounts.vaultTokenAccount,  
+    vaultAuthority: accounts.vaultAuthority,        
     tokenProgram: TOKEN_PROGRAM,
     systemProgram: SystemProgram.programId, 
   })
