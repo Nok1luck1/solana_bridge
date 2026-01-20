@@ -1,3 +1,4 @@
+import { readFileSync } from "fs";
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { BN } from "bn.js";
@@ -9,6 +10,9 @@ import {
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 import { assert } from "chai";
 import type { Bridge } from "../target/types/bridge";
+const idl = JSON.parse(
+  readFileSync("./target/idl/bridge.json", "utf-8")
+);
 
 import {
   confirmTransaction,
@@ -35,8 +39,11 @@ describe("bridge", async () => {
   const payer = user;
   const connection = provider.connection;
 
-  const program = anchor.workspace.Bridge as Program<Bridge>;
-
+  //const program = anchor.workspace.Bridge as Program<Bridge>;
+  const program = new Program<Bridge>(
+  idl as Bridge,
+  provider
+);
   const accounts: Record<string, PublicKey> = {
     tokenProgram: TOKEN_PROGRAM,
     systemProgram: SystemProgram.programId,
@@ -49,17 +56,23 @@ describe("bridge", async () => {
   let admin1: anchor.web3.Keypair = anchor.web3.Keypair.generate();
   const [adminConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account to init
   console.log(adminConfigPDA)
-  const tx = await program.methods
-    .initialize([admin1.publicKey]) 
-    .accounts({
-      authority: admin1.publicKey,
-      adminConfig: adminConfigPDA,
-      systemProgram: anchor.web3.SystemProgram.programId,
-    })
-    .signers([admin1])
-    .rpc();
+  const inittx = await program.methods.initialize([admin1.publicKey]).accounts({
+    authority: admin1.publicKey,
+    adminConfig: adminConfigPDA,
+    systemProgram:program.programId
+  }).signers([admin1]).rpc();
+  console.log("Initialization transaction signature:", inittx);
+  // const tx = await program.methods
+  //   .initialize([admin1.publicKey]) 
+  //   .accounts({
+  //     authority: admin1.publicKey,
+  //     adminConfig: adminConfigPDA,
+  //     systemProgram:program.programId
+  //   })
+  //   .signers([admin1])
+  //   .rpc();
 
-  console.log("Transaction signature:", tx);
+  // console.log("Transaction signature:", tx);
   
   ///////end of init
   let alice: anchor.web3.Keypair;
