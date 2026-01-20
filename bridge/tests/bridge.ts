@@ -41,7 +41,19 @@ describe("bridge", async () => {
     tokenProgram: TOKEN_PROGRAM,
     systemProgram: SystemProgram.programId,
   };
-  console.log(" 11111111")
+  console.log("=== PROVIDER erbererberberberb ===");
+///// calling initialize before creating orders
+  let admin1: anchor.web3.Keypair = anchor.web3.Keypair.generate();
+  console.log("=== admin ===",admin1);
+  const [adminConfigPDA] = PublicKey.findProgramAddressSync([Buffer.from("admin_config")],program.programId);//receiving admin config account to init
+   console.log("=== adminConfifPDA ===",adminConfigPDA);
+  const initializetx = await program.methods.initialize([admin1.publicKey]).accounts({
+    authority: admin1.publicKey,
+    //adminConfig:adminConfigPDA,
+    //systemProgram: SystemProgram.programId, 
+  }).signers([admin1]).rpc();
+  console.log(initializetx,"transaction initialize");
+  ///////end of init
   let alice: anchor.web3.Keypair;
   let tokenMintA: anchor.web3.Keypair;
   [alice, tokenMintA] = makeKeypairs(2);
