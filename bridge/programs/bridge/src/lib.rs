@@ -16,7 +16,7 @@ pub mod bridge {
         init_if_needed,
         payer = authority,
         space = 8 + AdminConfig::INIT_SPACE,
-        seeds = [b"admin_config"],
+        seeds = [b"adminconfig"],
         bump
     )]
         pub admin_config: Account<'info, AdminConfig>,
