@@ -2,7 +2,7 @@
 use anchor_lang::prelude::*;
 pub mod pair;
 pub use pair::*;
-declare_id!("FnKGHW1EPKnMUL8FgauV1v5xK4Evmy9cQDKFAMvdQdXz");
+declare_id!("Da4NV6SBhsGffRqU53TNRyQAStnZD3AajBAuChkZLn44");
 
 #[program]
 pub mod bridge {

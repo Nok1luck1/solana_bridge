@@ -10,15 +10,14 @@ import {
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 import { assert } from "chai";
 import type { Bridge } from "../target/types/bridge";
-const idl = JSON.parse(
-  readFileSync("./target/idl/bridge.json", "utf-8")
-);
+
 
 import {
   confirmTransaction,
   createAccountsMintsAndTokenAccounts,
   makeKeypairs,
 } from "@solana-developers/helpers";
+import { token } from "@coral-xyz/anchor/dist/cjs/utils";
 
 console.log("=== FILE LOADED ===");
 
@@ -40,39 +39,37 @@ describe("bridge", async () => {
   const connection = provider.connection;
 
   //const program = anchor.workspace.Bridge as Program<Bridge>;
-  const program = new Program<Bridge>(
-  idl as Bridge,
-  provider
-);
+  const program = anchor.workspace.Bridge as Program<Bridge>;
+  console.log("=== PROGRAM LOADED ===");
   const accounts: Record<string, PublicKey> = {
     tokenProgram: TOKEN_PROGRAM,
     systemProgram: SystemProgram.programId,
   };
   console.log("=== PROVIDER erbererberberberb ===");
 ///// calling initialize before creating orders
-
-  // const program_accounts = await program.account.adminConfig;
-  // console.log(program_accounts ,"erberberb")
   let admin1: anchor.web3.Keypair = anchor.web3.Keypair.generate();
+  await provider.connection.requestAirdrop(admin1.publicKey, 10000000000);
+  const airdropSig = await provider.connection.requestAirdrop(
+      admin1.publicKey,
+      2 * anchor.web3.LAMPORTS_PER_SOL
+    );
+    await provider.connection.confirmTransaction(airdropSig, "confirmed");
+  // const balance  = await provider.connection.getBalance(admin1.publicKey);
+  // console.log(balance,"admin1 balance")
   const [adminConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account to init
-  console.log(adminConfigPDA)
-  const inittx = await program.methods.initialize([admin1.publicKey]).accounts({
-    authority: admin1.publicKey,
-    adminConfig: adminConfigPDA,
-    systemProgram:program.programId
-  }).signers([admin1]).rpc();
-  console.log("Initialization transaction signature:", inittx);
-  // const tx = await program.methods
-  //   .initialize([admin1.publicKey]) 
-  //   .accounts({
-  //     authority: admin1.publicKey,
-  //     adminConfig: adminConfigPDA,
-  //     systemProgram:program.programId
-  //   })
-  //   .signers([admin1])
-  //   .rpc();
+  console.log(adminConfigPDA,"adminConfigPDA before init")
+  // const isAdmin = await program.account.adminConfig.fetch(adminConfigPDA);
+  // console.log(isAdmin,"isAdmin before init")
 
-  // console.log("Transaction signature:", tx);
+
+  const inittx = await program.methods
+    .initialize([admin1.publicKey])
+    .accounts({
+      authority: admin1.publicKey
+    })
+    .signers([admin1])
+    .rpc();
+  console.log("Transaction signature:", inittx);
   
   ///////end of init
   let alice: anchor.web3.Keypair;
@@ -129,8 +126,6 @@ describe("bridge", async () => {
       
       currentCounter = new BN(0);
     }
-
-    // Найти order PDA с текущим counter
     const [orderPda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("order"),
@@ -141,8 +136,6 @@ describe("bridge", async () => {
     );
     
     accounts.order = orderPda;
-
-   
     const [vaultPda] = PublicKey.findProgramAddressSync(
       [
         Buffer.from("vault"),
@@ -150,58 +143,53 @@ describe("bridge", async () => {
       ],
       program.programId
     );
-    
     accounts.vaultTokenAccount = vaultPda;
-
-
     const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
       [Buffer.from("vault_authority")],
       program.programId
     );
     
     accounts.vaultAuthority = vaultAuthorityPda;
-
     // Ethereum адреса (20 байт без 0x префикса)
     const token1 = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
     const receiver = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
-    console.log("token1 length:", token1.length);  // Должно быть 40
-    console.log("receiver length:", receiver.length);  // Должно быть 40
-    console.log("Creating order...");
-    console.log("Accounts:", {
-      user: accounts.user.toString(),
-      orderId: accounts.orderId.toString(),
-      order: accounts.order.toString(),
-      tokenMint: accounts.tokenMintA.toString(),
-      makerTokenAccount: accounts.makerTokenAccount.toString(),
-      vault: accounts.vaultTokenAccount.toString(),
-      vaultAuthority: accounts.vaultAuthority.toString(),
+
+try {
+  const createOrder = await program.methods.orderForTransfer(token1,receiver, tokenAOfferedAmount, tokenBWantedAmount).accounts({
+      user: accounts.user,
+      orderId: accounts.orderId,
+      order: accounts.order,
+      tokenMint: accounts.tokenMintA,
+      makerTokenAccount: accounts.makerTokenAccount,
+      vault: accounts.vaultTokenAccount,
+      vaultAuthority: accounts.vaultAuthority,
+      tokenProgram: accounts.tokenProgram,
+      systemProgram: accounts.systemProgram,
+    })
+    .signers([alice])
+    .rpc({ 
+      skipPreflight: false,  // Включить preflight для проверки
+      commitment: "confirmed" 
     });
 
-    const transactionSignature = await program.methods
-  .orderForTransfer(
-    token1,
-    receiver,
-    tokenAOfferedAmount,
-    tokenBWantedAmount
-  )
-  .accounts({
-     user: alice.publicKey,
-    orderId: accounts.orderId,              
-    order: accounts.order,                   
-    token0Mint: tokenMintA.publicKey,        
-    makerTokenAccount: accounts.makerTokenAccount,
-    vaultTokenAccount: accounts.vaultTokenAccount,  
-    vaultAuthority: accounts.vaultAuthority,        
-    tokenProgram: TOKEN_PROGRAM,
-    systemProgram: SystemProgram.programId, 
-  })
-  .signers([alice])
-  .rpc();
-  console.log(transactionSignature,"trantransactionSignature")
-    await confirmTransaction(connection, transactionSignature);
-    console.log("Order created:", transactionSignature);
+  console.log("✅ Success! Tx:", createOrder);
 
-    // Проверяем что vault содержит токены
+} catch (error) {
+  console.error("❌ Full error object:", JSON.stringify(error, null, 2));
+  if (error instanceof anchor.AnchorError) {
+    console.error("Anchor Error Code:", error.error.errorCode.code);
+    console.error("Anchor Error Name:", error.error.errorCode.number);
+    console.error("Anchor Error Message:", error.error.errorMessage);
+  }
+  if (error.logs) {
+    console.error("\n📋 Program Logs:");
+    error.logs.forEach(log => console.error(log));
+  }
+  if (error.simulationResponse) {
+    console.error("\n🔍 Simulation Error:", error.simulationResponse.err);
+  }
+}
+///////////////////////////
     const vaultBalanceResponse = await connection.getTokenAccountBalance(
       vaultPda
     );
