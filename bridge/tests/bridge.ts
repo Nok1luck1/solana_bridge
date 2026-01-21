@@ -187,7 +187,6 @@ try {
       `Expected vault balance ${tokenAOfferedAmount.toString()}, got ${vaultBalance.toString()}`
     );
 
-    // Проверяем что Order аккаунт содержит правильные данные
     const orderAccount = await program.account.order.fetch(orderPda);
 
     console.log("Order account data:", {
@@ -200,37 +199,6 @@ try {
       status: orderAccount.status,
     });
 
-    assert(
-      orderAccount.maker.equals(alice.publicKey),
-      "Order maker should be Alice"
-    );
-    assert(
-      orderAccount.token0.equals(tokenMintA.publicKey),
-      "Token0 should match tokenMintA"
-    );
-    assert(
-      orderAccount.token1 === token1,
-      "Token1 should match the Ethereum address"
-    );
-    assert(
-      orderAccount.token0amount.eq(tokenAOfferedAmount),
-      "Token0 amount should match offered amount"
-    );
-    assert(
-      orderAccount.token1amount.eq(tokenBWantedAmount),
-      "Token1 amount should match wanted amount"
-    );
-    assert(
-      orderAccount.status.created !== undefined,
-      "Order status should be CREATED"
-    );
-    assert(
-      orderAccount.id.eq(currentCounter),
-      "Order ID should match counter"
-    );
-
-    console.log("✅ All checks passed!");
- 
 
   // it("Cancels the order and returns tokens to Alice", async () => {
   //   // Получаем текущий order

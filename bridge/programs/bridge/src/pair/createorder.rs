@@ -9,9 +9,7 @@ pub struct CreateOrder<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
-        init_if_needed,
-        payer = user,
-        space = 8 + OrderId::INIT_SPACE,
+        mut,
         seeds = [b"order_id"],
         bump
     )]
