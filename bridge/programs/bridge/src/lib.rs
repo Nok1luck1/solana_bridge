@@ -18,8 +18,16 @@ pub mod bridge {
         space = 8 + AdminConfig::INIT_SPACE,
         seeds = [b"adminconfig"],
         bump
-    )]
+        )]
         pub admin_config: Account<'info, AdminConfig>,
+        #[account(
+        init_if_needed,
+        payer = authority,
+        space = 8 + OrderId::INIT_SPACE,
+        seeds = [b"orderid"],
+        bump
+        )]
+        pub order_counter: Account<'info, OrderId>,
         pub system_program: Program<'info, System>,
     }
 
@@ -28,6 +36,8 @@ pub mod bridge {
         let admin_config = &mut ctx.accounts.admin_config;
         admin_config.admins = admins;
         admin_config.bump = ctx.bumps.admin_config;
+        let order_counter = &mut ctx.accounts.order_counter;
+        order_counter.counter = 0;
         Ok(())
     }
     pub fn order_for_transfer(

@@ -58,20 +58,15 @@ describe("bridge", async () => {
   // console.log(balance,"admin1 balance")
   const [adminConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account to init
   console.log(adminConfigPDA,"adminConfigPDA before init")
-  // const isAdmin = await program.account.adminConfig.fetch(adminConfigPDA);
-  // console.log(isAdmin,"isAdmin before init")
 
 
-  const inittx = await program.methods
+    const init = await program.methods
     .initialize([admin1.publicKey])
-    .accounts({
-      authority: admin1.publicKey
-    })
+    .accounts({authority: admin1.publicKey})
     .signers([admin1])
     .rpc();
-  console.log("Transaction signature:", inittx);
-  
-  ///////end of init
+    console.log("Transaction signature:", init);
+ 
   let alice: anchor.web3.Keypair;
   let tokenMintA: anchor.web3.Keypair;
   [alice, tokenMintA] = makeKeypairs(2);
@@ -80,10 +75,7 @@ describe("bridge", async () => {
 
   const SECONDS = 1000;
   const ANCHOR_SLOW_TEST_THRESHOLD = 40 * SECONDS;
-  console.log(ANCHOR_SLOW_TEST_THRESHOLD,"ANCHOR_SLOW_TEST_THRESHOLD");
-  before(
-    "Creates Alice account, token mint, and associated token accounts",
-    async () => {
+      console.log("prepering for creation order")
       const usersMintsAndTokenAccounts =
         await createAccountsMintsAndTokenAccounts(
           [[1_000_000_000]],
@@ -105,19 +97,14 @@ describe("bridge", async () => {
       accounts.user = alice.publicKey;
       accounts.tokenMintA = tokenMintA.publicKey;
       accounts.makerTokenAccount = aliceTokenAccountA;
-    }
-  );
-
-  it("Puts the tokens Alice offers into the vault when Alice makes an order", async () => {
+  
    
     const [orderIdPda] = PublicKey.findProgramAddressSync(
       [Buffer.from("order_id")],
       program.programId
     );
-    
-    accounts.orderId = orderIdPda;
 
-    
+    accounts.orderId = orderIdPda;
     let currentCounter = new BN(0);
     try {
       const orderIdAccount = await program.account.orderId.fetch(orderIdPda);
@@ -150,7 +137,6 @@ describe("bridge", async () => {
     );
     
     accounts.vaultAuthority = vaultAuthorityPda;
-    // Ethereum адреса (20 байт без 0x префикса)
     const token1 = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
     const receiver = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
 
@@ -164,7 +150,7 @@ try {
       vault: accounts.vaultTokenAccount,
       vaultAuthority: accounts.vaultAuthority,
       tokenProgram: accounts.tokenProgram,
-      systemProgram: accounts.systemProgram,
+      //systemProgram: accounts.systemProgram,
     })
     .signers([alice])
     .rpc({ 
@@ -244,7 +230,7 @@ try {
     );
 
     console.log("✅ All checks passed!");
-  }).slow(ANCHOR_SLOW_TEST_THRESHOLD);
+ 
 
   // it("Cancels the order and returns tokens to Alice", async () => {
   //   // Получаем текущий order
