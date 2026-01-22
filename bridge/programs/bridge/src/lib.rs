@@ -2,7 +2,7 @@
 use anchor_lang::prelude::*;
 pub mod pair;
 pub use pair::*;
-declare_id!("Da4NV6SBhsGffRqU53TNRyQAStnZD3AajBAuChkZLn44");
+declare_id!("HfjE4aLC7fwri7nwumWLYSnFSaNDcU17d7sh6YN9MtxS");
 
 #[program]
 pub mod bridge {
@@ -35,9 +35,11 @@ pub mod bridge {
         require!(admins.len() <= 10, errors::ErrorCode::TooManyAdmins);
         let admin_config = &mut ctx.accounts.admin_config;
         admin_config.admins = admins;
+        admin_config.settet = true;
         admin_config.bump = ctx.bumps.admin_config;
         let order_counter = &mut ctx.accounts.order_counter;
         order_counter.counter = 0;
+        order_counter.bump = ctx.bumps.order_counter;
         Ok(())
     }
     pub fn order_for_transfer(
