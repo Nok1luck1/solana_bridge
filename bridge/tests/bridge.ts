@@ -58,13 +58,17 @@ describe("bridge", async () => {
   // console.log(balance,"admin1 balance")
   const [adminConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account to init
   console.log(adminConfigPDA,"adminConfigPDA before init")
+  const [orderidConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("order_id")], program.programId);;//receiving admin config account to init
+  console.log(orderidConfigPDA,"orderidConfigPDA before init")
 
 
     const init = await program.methods
     .initialize([admin1.publicKey])
-    .accounts({authority: admin1.publicKey})
-    .signers([admin1])
-    .rpc();
+    .accounts({authority:admin1.publicKey }
+    )
+    .signers([admin1]).simulate()
+    // .rpc()
+  ;
     console.log("Transaction signature:", init);
  
   let alice: anchor.web3.Keypair;
@@ -100,81 +104,104 @@ describe("bridge", async () => {
   
    
     const [orderIdPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("order_id")],
-      program.programId
-    );
+    [Buffer.from("order_id")],
+    program.programId
+  );
 
-    accounts.orderId = orderIdPda;
-    let currentCounter = new BN(0);
-    try {
-      const orderIdAccount = await program.account.orderId.fetch(orderIdPda);
-      currentCounter = new BN(orderIdAccount.counter);
-    } catch (e) {
-      
-      currentCounter = new BN(0);
+  let currentCounter = new BN(0);
+  try {
+    const orderIdAccount = await program.account.orderId.fetch(orderIdPda);
+    currentCounter = new BN(orderIdAccount.counter);
+  } catch (e) {
+    currentCounter = new BN(0);
+  }
+
+  const [orderPda] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("order"),
+      alice.publicKey.toBuffer(),
+      currentCounter.toArrayLike(Buffer, "le", 8),
+    ],
+    program.programId
+  );
+
+  const [vaultPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("vault"), tokenMintA.publicKey.toBuffer()],
+    program.programId
+  );
+
+  const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("vault_authority")],
+    program.programId
+  );
+
+  const token1 = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
+  const receiver = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
+
+  try {
+    const createOrder = await program.methods
+      .orderForTransfer(token1, receiver, tokenAOfferedAmount, tokenBWantedAmount)
+      .accountsStrict({
+        user: alice.publicKey,
+        orderId: orderIdPda,
+        order: orderPda,
+        token0Mint: tokenMintA.publicKey,
+        makerTokenAccount: aliceTokenAccountA,
+        vaultTokenAccount: vaultPda,
+        vaultAuthority: vaultAuthorityPda,
+        tokenProgram: TOKEN_PROGRAM,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([alice])
+      .rpc({
+        skipPreflight: false,
+        commitment: "confirmed",
+      });
+
+    console.log("✅ Success! Tx:", createOrder);
+  } catch (error: any) {
+    console.error("\n" + "=".repeat(60));
+    console.error("❌ TRANSACTION FAILED");
+    console.error("=".repeat(60));
+
+    console.error("\nError Type:", error.constructor.name);
+    console.error("Error Message:", error.message);
+
+    if (error instanceof anchor.AnchorError) {
+      console.error("\nAnchor Error Code:", error.error?.errorCode?.code);
+      console.error("Anchor Error Number:", error.error?.errorCode?.number);
+      console.error("Anchor Error Message:", error.error?.errorMessage);
     }
-    const [orderPda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("order"),
-        alice.publicKey.toBuffer(),
-        currentCounter.toArrayLike(Buffer, "le", 8),
-      ],
-      program.programId
-    );
-    
-    accounts.order = orderPda;
-    const [vaultPda] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("vault"),
-        tokenMintA.publicKey.toBuffer(),
-      ],
-      program.programId
-    );
-    accounts.vaultTokenAccount = vaultPda;
-    const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("vault_authority")],
-      program.programId
-    );
-    
-    accounts.vaultAuthority = vaultAuthorityPda;
-    const token1 = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
-    const receiver = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
 
-try {
-  const createOrder = await program.methods.orderForTransfer(token1,receiver, tokenAOfferedAmount, tokenBWantedAmount).accounts({
-      user: accounts.user,
-      orderId: accounts.orderId,
-      order: accounts.order,
-      tokenMint: accounts.tokenMintA,
-      makerTokenAccount: accounts.makerTokenAccount,
-      vault: accounts.vaultTokenAccount,
-      vaultAuthority: accounts.vaultAuthority,
-      tokenProgram: accounts.tokenProgram,
-      //systemProgram: accounts.systemProgram,
-    })
-    .signers([alice])
-    .rpc({ 
-      skipPreflight: false,  // Включить preflight для проверки
-      commitment: "confirmed" 
-    });
+    if (error.logs && error.logs.length > 0) {
+      console.error("\nProgram Logs:");
+      error.logs.forEach((log: string, i: number) => console.error(`  [${i}] ${log}`));
+    }
 
-  console.log("✅ Success! Tx:", createOrder);
+    if (error.simulationResponse) {
+      console.error("\nSimulation Error:", error.simulationResponse.err);
+      if (error.simulationResponse.logs) {
+        console.error("Simulation Logs:", error.simulationResponse.logs);
+      }
+    }
 
-} catch (error) {
-  console.error("❌ Full error object:", JSON.stringify(error, null, 2));
-  if (error instanceof anchor.AnchorError) {
-    console.error("Anchor Error Code:", error.error.errorCode.code);
-    console.error("Anchor Error Name:", error.error.errorCode.number);
-    console.error("Anchor Error Message:", error.error.errorMessage);
+    if (error.transactionLogs) {
+      console.error("\nTransaction Logs:");
+      error.transactionLogs.forEach((log: string, i: number) =>
+        console.error(`  [${i}] ${log}`)
+      );
+    }
+
+    console.error("\nAll Error Properties:");
+    for (const key in error) {
+      if (error.hasOwnProperty(key)) {
+        console.error(`  ${key}:`, error[key]);
+      }
+    }
+
+    console.error("\n" + "=".repeat(60) + "\n");
   }
-  if (error.logs) {
-    console.error("\n📋 Program Logs:");
-    error.logs.forEach(log => console.error(log));
-  }
-  if (error.simulationResponse) {
-    console.error("\n🔍 Simulation Error:", error.simulationResponse.err);
-  }
-}
+
 ///////////////////////////
     const vaultBalanceResponse = await connection.getTokenAccountBalance(
       vaultPda
@@ -198,70 +225,4 @@ try {
       token1amount: orderAccount.token1amount.toString(),
       status: orderAccount.status,
     });
-
-
-  // it("Cancels the order and returns tokens to Alice", async () => {
-  //   // Получаем текущий order
-  //   const orderIdAccount = await program.account.orderId.fetch(accounts.orderId);
-  //   const orderId = new BN(orderIdAccount.counter).sub(new BN(1)); // Последний созданный order
-
-  //   const [orderPda] = PublicKey.findProgramAddressSync(
-  //     [
-  //       Buffer.from("order"),
-  //       alice.publicKey.toBuffer(),
-  //       orderId.toArrayLike(Buffer, "le", 8),
-  //     ],
-  //     program.programId
-  //   );
-
-  //   // Проверяем баланс Alice до отмены
-  //   const aliceBalanceBefore = await connection.getTokenAccountBalance(
-  //     accounts.makerTokenAccount
-  //   );
-    
-  //   console.log("Alice balance before cancel:", aliceBalanceBefore.value.amount);
-
-  //   const transactionSignature = await program.methods
-  //     .orderForCancel()
-  //     .accounts({
-  //       user: accounts.user,
-  //       order: orderPda,
-  //       token0Mint: accounts.tokenMintA,
-  //       makerTokenAccount: accounts.makerTokenAccount,
-  //       vaultTokenAccount: accounts.vaultTokenAccount,
-  //       vaultAuthority: accounts.vaultAuthority,
-  //       tokenProgram: accounts.tokenProgram,
-  //       systemProgram: accounts.systemProgram,
-  //     })
-  //     .signers([alice])
-  //     .rpc();
-
-  //   await confirmTransaction(connection, transactionSignature);
-  //   console.log("Order cancelled:", transactionSignature);
-
-  //   // Проверяем что токены вернулись Alice
-  //   const aliceBalanceAfter = await connection.getTokenAccountBalance(
-  //     accounts.makerTokenAccount
-  //   );
-    
-  //   console.log("Alice balance after cancel:", aliceBalanceAfter.value.amount);
-    
-  //   const balanceIncrease = new BN(aliceBalanceAfter.value.amount).sub(
-  //     new BN(aliceBalanceBefore.value.amount)
-  //   );
-    
-  //   assert(
-  //     balanceIncrease.eq(tokenAOfferedAmount),
-  //     `Expected balance increase of ${tokenAOfferedAmount.toString()}, got ${balanceIncrease.toString()}`
-  //   );
-
-  //   // Проверяем статус ордера
-  //   const orderAccount = await program.account.order.fetch(orderPda);
-  //   assert(
-  //     orderAccount.status.cancelled !== undefined,
-  //     "Order status should be CANCELLED"
-  //   );
-
-  //   console.log("✅ Cancel test passed!");
-  // }).slow(ANCHOR_SLOW_TEST_THRESHOLD);
 });

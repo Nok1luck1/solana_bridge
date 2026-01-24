@@ -1,5 +1,5 @@
 use super::ErrorCode;
-use crate::{transfer_tokens, Order, OrderCreated, OrderId, StatusOrder};
+use crate::{transfer_tokens, AdminConfig, Order, OrderCreated, OrderId, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
@@ -50,7 +50,7 @@ pub struct CreateOrder<'info> {
     /// CHECK: This is a token account that can hold any SPL token.
     /// We verify it's a valid token account through CPI calls but don't
     /// deserialize it as Account<TokenAccount> to support multiple token types
-    pub vault_authority: UncheckedAccount<'info>,
+    pub vault_authority: Account<'info, AdminConfig>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
@@ -70,10 +70,10 @@ pub fn create_order(
     require!(_token1.len() == 42, ErrorCode::AddressLengthError);
     require!(_receiver.len() == 42, ErrorCode::AddressLengthError);
 
-    if order_id.counter == 0 {
-        order_id.counter = 1;
-        order_id.bump = ctx.bumps.order_id;
-    }
+    // if order_id.counter == 0 {
+    //     order_id.counter = 1;
+    //     order_id.bump = ctx.bumps.order_id;
+    // }
     order.id = order_id.counter;
     order.maker = ctx.accounts.user.key();
     order.token0 = ctx.accounts.token_0_mint.key();

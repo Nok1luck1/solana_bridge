@@ -13,7 +13,7 @@ pub mod bridge {
         #[account(mut)]
         pub authority: Signer<'info>,
         #[account(
-        init_if_needed,
+        init,
         payer = authority,
         space = 8 + AdminConfig::INIT_SPACE,
         seeds = [b"adminconfig"],
@@ -21,13 +21,13 @@ pub mod bridge {
         )]
         pub admin_config: Account<'info, AdminConfig>,
         #[account(
-        init_if_needed,
+        init,
         payer = authority,
         space = 8 + OrderId::INIT_SPACE,
-        seeds = [b"orderid"],
+        seeds = [b"order_id"],
         bump
         )]
-        pub order_counter: Account<'info, OrderId>,
+        pub order_id: Account<'info, OrderId>,
         pub system_program: Program<'info, System>,
     }
 
@@ -36,8 +36,8 @@ pub mod bridge {
         let admin_config = &mut ctx.accounts.admin_config;
         admin_config.admins = admins;
         admin_config.bump = ctx.bumps.admin_config;
-        let order_counter = &mut ctx.accounts.order_counter;
-        order_counter.counter = 0;
+        let order_id = &mut ctx.accounts.order_id;
+        order_id.counter = 1;
         Ok(())
     }
     pub fn order_for_transfer(
