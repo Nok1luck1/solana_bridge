@@ -55,20 +55,20 @@ describe("bridge", async () => {
     );
     await provider.connection.confirmTransaction(airdropSig, "confirmed");
   const balance  = await provider.connection.getBalance(admin1.publicKey);
-  console.log(balance,"admin1 balance")
+  //console.log(balance,"admin1 balance")
   const [adminConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account to init
-  console.log(adminConfigPDA,"adminConfigPDA before init")
+  //console.log(adminConfigPDA,"adminConfigPDA before init")
 
     const init = await program.methods
     .initialize([admin1.publicKey])
     .accounts({authority: admin1.publicKey})
     .signers([admin1])
     .rpc();
-    console.log("Transaction signature:", init);
+    //.log("Transaction signature:", init);
     const [adminConfigPDA1] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account to init
-  console.log(adminConfigPDA1,"adminConfigPDA after init")
+  //console.log(adminConfigPDA1,"adminConfigPDA after init")
      const adminAccount = await program.account.adminConfig.fetch(adminConfigPDA1);
-    console.log("adminAccount Account:", adminAccount);
+    //console.log("adminAccount Account:", adminAccount);
   let alice: anchor.web3.Keypair;
   let tokenMintA: anchor.web3.Keypair;
   [alice, tokenMintA] = makeKeypairs(2);
@@ -105,54 +105,63 @@ describe("bridge", async () => {
       [Buffer.from("orderid")],
       program.programId
     );
-    console.log(orderIdPda,"order id pda")
+    //console.log(orderIdPda,"order id pda")
     const accountInfo = await connection.getAccountInfo(orderIdPda);
 if (!accountInfo) {
-    console.log("Account doesn't exist");
+    //console.log("Account doesn't exist");
     return;
 }
 
-console.log("Account data size:", accountInfo.data.length);
-console.log("Account data:", accountInfo.data);
+//console.log("Account data size:", accountInfo.data.length);
+//console.log("Account data:", accountInfo.data);
     const orderAccount = await program.account.orderId.fetch(orderIdPda);
-    console.log("Order ID Account:", orderAccount);
+    // console.log("Order ID Account:", orderAccount);
   
     const token1 = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
     const receiver = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
 
 try {
-  const createOrder = await program.methods.orderForTransfer(token1,receiver, tokenAOfferedAmount, tokenBWantedAmount).accounts({
-      user: accounts.user,
-      orderId: accounts.orderId,
-      order: accounts.order,
-      tokenMint: accounts.tokenMintA,
-      makerTokenAccount: accounts.makerTokenAccount,
-      vault: accounts.vaultTokenAccount,
-      vaultAuthority: accounts.vaultAuthority,
-      tokenProgram: accounts.tokenProgram,
-      //systemProgram: accounts.systemProgram,
-    })
+  const createOrder = await program.methods
+    .orderForTransfer(token1, receiver, tokenBWantedAmount, tokenBWantedAmount)
+    .accountsStrict({ user: alice.publicKey,
+      
+     })
     .signers([alice])
     .rpc({ 
-      skipPreflight: false,  // Включить preflight для проверки
+      skipPreflight: false,
       commitment: "confirmed" 
     });
 
   console.log("✅ Success! Tx:", createOrder);
 
-} catch (error) {
-  console.error("❌ Full error object:", JSON.stringify(error, null, 2));
+} catch (error: any) {
+  console.error("\n❌ ERROR OCCURRED ❌\n");
+  
+  console.error("Raw error:", error);
+  
   if (error instanceof anchor.AnchorError) {
-    console.error("Anchor Error Code:", error.error.errorCode.code);
-    console.error("Anchor Error Name:", error.error.errorCode.number);
-    console.error("Anchor Error Message:", error.error.errorMessage);
+    console.error("\n🔴 Anchor Error Details:");
+    console.error("  Code:", error.error?.errorCode?.code);
+    console.error("  Number:", error.error?.errorCode?.number);
+    console.error("  Message:", error.error?.errorMessage);
+    console.error("  Program:", error.program);
   }
-  if (error.logs) {
+
+  if (error.logs && error.logs.length > 0) {
     console.error("\n📋 Program Logs:");
-    error.logs.forEach(log => console.error(log));
+    error.logs.forEach((log: string) => console.error("  ", log));
   }
-  if (error.simulationResponse) {
-    console.error("\n🔍 Simulation Error:", error.simulationResponse.err);
+
+  if (error.simulationResponse?.err) {
+    console.error("\n🔍 Simulation Error:", 
+      JSON.stringify(error.simulationResponse.err, null, 2));
+  }
+
+  if (error.message) {
+    console.error("\n💬 Message:", error.message);
+  }
+  if (error.stack) {
+    console.error("\n📚 Stack:", error.stack);
   }
 }
 ///////////////////////////
