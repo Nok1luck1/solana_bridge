@@ -24,9 +24,8 @@ console.log("=== FILE LOADED ===");
 describe("bridge", async () => {
   console.log("=== INSIDE DESCRIBE ===");
   
-  // const TOKEN_PROGRAM: typeof TOKEN_2022_PROGRAM_ID | typeof TOKEN_PROGRAM_ID =
-  //   TOKEN_2022_PROGRAM_ID;
-    const TOKEN_PROGRAM = TOKEN_PROGRAM_ID; 
+  const TOKEN_PROGRAM: typeof TOKEN_2022_PROGRAM_ID | typeof TOKEN_PROGRAM_ID =
+    TOKEN_2022_PROGRAM_ID;
   console.log("=== TOKEN PROGRAM SET ===");
   
   const provider = anchor.AnchorProvider.env();
@@ -82,7 +81,7 @@ describe("bridge", async () => {
     console.error("Error message", error.message);
   }
 }
-   const [adminConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account after init
+  const [adminConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account after init
   console.log(adminConfigPDA,"adminConfigPDA after init")
  
   let alice: anchor.web3.Keypair;
@@ -115,7 +114,10 @@ describe("bridge", async () => {
       accounts.user = alice.publicKey;
       accounts.tokenMintA = tokenMintA.publicKey;
       accounts.makerTokenAccount = aliceTokenAccountA;
-  
+//         const mintInfo = await connection.getAccountInfo(tokenMintA.publicKey);
+// console.log("Mint owner program:", mintInfo?.owner.toString());
+// console.log("TOKEN_PROGRAM_ID:", TOKEN_PROGRAM_ID.toString());
+// console.log("TOKEN_2022_PROGRAM_ID:", TOKEN_2022_PROGRAM_ID.toString());
    
     const [orderIdPda] = PublicKey.findProgramAddressSync(
     [Buffer.from("order_id")],
@@ -144,29 +146,23 @@ describe("bridge", async () => {
     program.programId
   );
 
-  const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("vault_authority")],
-    program.programId
-  );
-
   const token1 = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
   const receiver = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
 
   try {
     const createOrder = await program.methods
       .orderForTransfer(token1, receiver, tokenAOfferedAmount, tokenBWantedAmount)
-      // .accountsStrict({
-      //   user: alice.publicKey,
-      //   orderId: orderIdPda,
-      //   order: orderPda,
-      //   token0Mint: tokenMintA.publicKey,
-      //   makerTokenAccount: aliceTokenAccountA,
-      //   vaultTokenAccount: vaultPda,
-      //   vaultAuthority: adminConfigPDA,
-      //   tokenProgram: TOKEN_PROGRAM,
-      //   systemProgram: SystemProgram.programId,
-      // })
-      .accounts({user:alice.publicKey})
+      .accountsStrict({
+        user: alice.publicKey,
+        orderId: orderIdPda,
+        order: orderPda,
+        token0Mint: tokenMintA.publicKey,
+        makerTokenAccount: accounts.makerTokenAccount,
+        vaultTokenAccount: vaultPda,
+        vaultAuthority: adminConfigPDA,
+        tokenProgram: TOKEN_PROGRAM,
+        systemProgram: SystemProgram.programId
+      })
       .signers([alice])
       .rpc({
         skipPreflight: false,
