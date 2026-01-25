@@ -35,6 +35,7 @@ pub mod bridge {
         require!(admins.len() <= 10, errors::ErrorCode::TooManyAdmins);
         let admin_config = &mut ctx.accounts.admin_config;
         admin_config.admins = admins;
+        admin_config.settet = true;
         admin_config.bump = ctx.bumps.admin_config;
         let order_id = &mut ctx.accounts.order_id;
         order_id.counter = 1;

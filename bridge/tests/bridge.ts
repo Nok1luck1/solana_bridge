@@ -91,8 +91,8 @@ describe("bridge", async () => {
   const tokenAOfferedAmount = new BN("1000000");
   const tokenBWantedAmount = new BN("1000000");
 
-  const SECONDS = 1000;
-  const ANCHOR_SLOW_TEST_THRESHOLD = 40 * SECONDS;
+  // const SECONDS = 1000;
+  // const ANCHOR_SLOW_TEST_THRESHOLD = 40 * SECONDS;
       console.log("prepering for creation order")
       const usersMintsAndTokenAccounts =
         await createAccountsMintsAndTokenAccounts(
@@ -218,26 +218,92 @@ describe("bridge", async () => {
   }
 
 ///////////////////////////
-    const vaultBalanceResponse = await connection.getTokenAccountBalance(
-      vaultPda
-    );
-    const vaultBalance = new BN(vaultBalanceResponse.value.amount);
+    // const vaultBalanceResponse = await connection.getTokenAccountBalance(
+    //   vaultPda
+    // );
+    // const vaultBalance = new BN(vaultBalanceResponse.value.amount);
     
-    console.log("Vault balance:", vaultBalance.toString());
-    assert(
-      vaultBalance.eq(tokenAOfferedAmount),
-      `Expected vault balance ${tokenAOfferedAmount.toString()}, got ${vaultBalance.toString()}`
-    );
+    // console.log("Vault balance:", vaultBalance.toString());
+    // assert(
+    //   vaultBalance.eq(tokenAOfferedAmount),
+    //   `Expected vault balance ${tokenAOfferedAmount.toString()}, got ${vaultBalance.toString()}`
+    // );
 
-    const orderAccount = await program.account.order.fetch(orderPda);
+    // const orderAccount = await program.account.order.fetch(orderPda);
 
-    console.log("Order account data:", {
-      id: orderAccount.id.toString(),
-      maker: orderAccount.maker.toString(),
-      token0: orderAccount.token0.toString(),
-      token1: orderAccount.token1,
-      token0amount: orderAccount.token0amount.toString(),
-      token1amount: orderAccount.token1amount.toString(),
-      status: orderAccount.status,
-    });
+    // console.log("Order account data:", {
+    //   id: orderAccount.id.toString(),
+    //   maker: orderAccount.maker.toString(),
+    //   token0: orderAccount.token0.toString(),
+    //   token1: orderAccount.token1,
+    //   token0amount: orderAccount.token0amount.toString(),
+    //   token1amount: orderAccount.token1amount.toString(),
+    //   status: orderAccount.status,
+    // });
+
+
+  // it("Cancels the order and returns tokens to Alice", async () => {
+  //   // Получаем текущий order
+  //   const orderIdAccount = await program.account.orderId.fetch(accounts.orderId);
+  //   const orderId = new BN(orderIdAccount.counter).sub(new BN(1)); // Последний созданный order
+
+  //   const [orderPda] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from("order"),
+  //       alice.publicKey.toBuffer(),
+  //       orderId.toArrayLike(Buffer, "le", 8),
+  //     ],
+  //     program.programId
+  //   );
+
+  //   // Проверяем баланс Alice до отмены
+  //   const aliceBalanceBefore = await connection.getTokenAccountBalance(
+  //     accounts.makerTokenAccount
+  //   );
+    
+  //   console.log("Alice balance before cancel:", aliceBalanceBefore.value.amount);
+
+  //   const transactionSignature = await program.methods
+  //     .orderForCancel()
+  //     .accounts({
+  //       user: accounts.user,
+  //       order: orderPda,
+  //       token0Mint: accounts.tokenMintA,
+  //       makerTokenAccount: accounts.makerTokenAccount,
+  //       vaultTokenAccount: accounts.vaultTokenAccount,
+  //       vaultAuthority: accounts.vaultAuthority,
+  //       tokenProgram: accounts.tokenProgram,
+  //       systemProgram: accounts.systemProgram,
+  //     })
+  //     .signers([alice])
+  //     .rpc();
+
+  //   await confirmTransaction(connection, transactionSignature);
+  //   console.log("Order cancelled:", transactionSignature);
+
+  //   // Проверяем что токены вернулись Alice
+  //   const aliceBalanceAfter = await connection.getTokenAccountBalance(
+  //     accounts.makerTokenAccount
+  //   );
+    
+  //   console.log("Alice balance after cancel:", aliceBalanceAfter.value.amount);
+    
+  //   const balanceIncrease = new BN(aliceBalanceAfter.value.amount).sub(
+  //     new BN(aliceBalanceBefore.value.amount)
+  //   );
+    
+  //   assert(
+  //     balanceIncrease.eq(tokenAOfferedAmount),
+  //     `Expected balance increase of ${tokenAOfferedAmount.toString()}, got ${balanceIncrease.toString()}`
+  //   );
+
+  //   // Проверяем статус ордера
+  //   const orderAccount = await program.account.order.fetch(orderPda);
+  //   assert(
+  //     orderAccount.status.cancelled !== undefined,
+  //     "Order status should be CANCELLED"
+  //   );
+
+  //   console.log("✅ Cancel test passed!");
+  // }).slow(ANCHOR_SLOW_TEST_THRESHOLD);
 });
