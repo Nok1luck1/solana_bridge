@@ -54,22 +54,36 @@ describe("bridge", async () => {
       2 * anchor.web3.LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(airdropSig, "confirmed");
-  // const balance  = await provider.connection.getBalance(admin1.publicKey);
-  // console.log(balance,"admin1 balance")
-  const [adminConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account to init
-  console.log(adminConfigPDA,"adminConfigPDA before init")
+  const [adminConfigPDAbeforeInit] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account to init
+  console.log(adminConfigPDAbeforeInit,"adminConfigPDA before init")
   const [orderidConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("order_id")], program.programId);;//receiving admin config account to init
   console.log(orderidConfigPDA,"orderidConfigPDA before init")
 
 
-    const init = await program.methods
+   try {
+  const init = await program.methods
     .initialize([admin1.publicKey])
-    .accounts({authority:admin1.publicKey }
-    )
-    .signers([admin1]).simulate()
-    // .rpc()
-  ;
-    console.log("Transaction signature:", init);
+    .accounts({authority: admin1.publicKey})
+    .signers([admin1])
+    .rpc();
+    
+  console.log("Transaction signature:", init);
+} catch (error) {
+  console.error("Error", error);
+  if (error.error) {
+    console.error("eror", error.error.errorCode);
+    console.error("Error", error.error.errorCode?.code);
+    console.error("Error message", error.error.errorMessage);
+  }
+  if (error.logs) {
+    console.error("Program logs", error.logs);
+  }
+  if (error.message) {
+    console.error("Error message", error.message);
+  }
+}
+   const [adminConfigPDA] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("adminconfig")], program.programId);;//receiving admin config account after init
+  console.log(adminConfigPDA,"adminConfigPDA after init")
  
   let alice: anchor.web3.Keypair;
   let tokenMintA: anchor.web3.Keypair;
@@ -141,17 +155,18 @@ describe("bridge", async () => {
   try {
     const createOrder = await program.methods
       .orderForTransfer(token1, receiver, tokenAOfferedAmount, tokenBWantedAmount)
-      .accountsStrict({
-        user: alice.publicKey,
-        orderId: orderIdPda,
-        order: orderPda,
-        token0Mint: tokenMintA.publicKey,
-        makerTokenAccount: aliceTokenAccountA,
-        vaultTokenAccount: vaultPda,
-        vaultAuthority: vaultAuthorityPda,
-        tokenProgram: TOKEN_PROGRAM,
-        systemProgram: SystemProgram.programId,
-      })
+      // .accountsStrict({
+      //   user: alice.publicKey,
+      //   orderId: orderIdPda,
+      //   order: orderPda,
+      //   token0Mint: tokenMintA.publicKey,
+      //   makerTokenAccount: aliceTokenAccountA,
+      //   vaultTokenAccount: vaultPda,
+      //   vaultAuthority: adminConfigPDA,
+      //   tokenProgram: TOKEN_PROGRAM,
+      //   systemProgram: SystemProgram.programId,
+      // })
+      .accounts({user:alice.publicKey})
       .signers([alice])
       .rpc({
         skipPreflight: false,

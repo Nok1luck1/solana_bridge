@@ -44,12 +44,9 @@ pub struct CreateOrder<'info> {
     )]
     pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
-        seeds = [b"vault_authority"],
+        seeds = [b"adminconfig"],
         bump
     )]
-    /// CHECK: This is a token account that can hold any SPL token.
-    /// We verify it's a valid token account through CPI calls but don't
-    /// deserialize it as Account<TokenAccount> to support multiple token types
     pub vault_authority: Account<'info, AdminConfig>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
