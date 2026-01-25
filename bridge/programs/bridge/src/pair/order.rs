@@ -10,9 +10,9 @@ pub struct Order {
     pub id: u64,
     pub maker: Pubkey,
     pub token0: Pubkey,
-    #[max_len(50)]
+    #[max_len(42)]
     pub token1: String,
-    #[max_len(50)]
+    #[max_len(42)]
     pub receiver: String,
     pub token0amount: u64,
     pub token1amount: u64,
@@ -24,9 +24,9 @@ pub struct Order {
 #[derive(InitSpace)]
 pub struct OrderExecution {
     pub id: u64,
-    #[max_len(50)]
+    #[max_len(42)]
     pub maker: String,
-    #[max_len(50)]
+    #[max_len(42)]
     pub token0: String,
     pub token1: Pubkey,
     pub receiver: Pubkey,
