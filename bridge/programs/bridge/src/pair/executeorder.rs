@@ -64,6 +64,10 @@ pub fn execute_order(
     require!(_token1amount > 0, ErrorCode::ZeroAmountError);
     require!(_token0.len() == 20, ErrorCode::AddressLengthError);
     require!(_sender.len() == 20, ErrorCode::AddressLengthError);
+    require!(
+        ctx.accounts.vault_token_program.amount >= _order.token1amount,
+        ErrorCode::InsufficientFundsError
+    );
     if _order_id.counter == 0 {
         _order_id.counter = 1;
         _order_id.bump = ctx.bumps.order_id;

@@ -44,30 +44,41 @@ pub struct CancelOrder<'info> {
         bump
     )]
     pub vault_authority: Account<'info, AdminConfig>,
+    pub admin_ref: Signer<'info>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
 pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {
     let order = &mut ctx.accounts.order;
+    require!(!order.locked, ErrorCode::ReentrancyDetected);
+    order.locked = true;
     require!(
         order.status == StatusOrder::CREATED,
         ErrorCode::OrderStatusError
     );
-    // require!(
-    //     ctx.accounts
-    //         .vault_authority
-    //         .is_admin(&ctx.accounts.admin_ref.key()),
-    //     ErrorCode::UnauthorizedAdmin
-    // );
-    // transfer_tokens(
-    //     &ctx.accounts.vault_token_account,
-    //     &ctx.accounts.maker_token_account,
-    //     &order.token0amount,
-    //     &ctx.accounts.token_0_mint,
-    //     &ctx.accounts.vault_authority.admins.first().unwrap(),
-    //     &ctx.accounts.token_program,
-    // )?;
+    require!(
+        order.maker == ctx.accounts.user.key(),
+        ErrorCode::UnauthorizedError
+    );
+    require!(
+        ctx.accounts
+            .vault_authority
+            .is_admin(&ctx.accounts.admin_ref.key()),
+        ErrorCode::UnauthorizedAdmin
+    );
+    require!(
+        ctx.accounts.vault_token_account.amount >= order.token0amount,
+        ErrorCode::InsufficientFundsError
+    );
+    transfer_tokens(
+        &ctx.accounts.vault_token_account,
+        &ctx.accounts.maker_token_account,
+        &order.token0amount,
+        &ctx.accounts.token_0_mint,
+        &ctx.accounts.admin_ref,
+        &ctx.accounts.token_program,
+    )?;
     order.status = StatusOrder::CANCELED;
     emit!(OrderCancelled {
         order_id: order.id,

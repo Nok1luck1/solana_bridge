@@ -28,4 +28,6 @@ pub enum ErrorCode {
     AdminAlreadyExists,
     #[msg("Order status Error")]
     OrderStatusError,
+    #[msg("Reentrancy Detected")]
+    ReentrancyDetected,
 }
