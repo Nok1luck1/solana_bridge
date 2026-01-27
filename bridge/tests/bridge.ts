@@ -29,7 +29,7 @@ describe("bridge", () => {
   let admin1: Keypair;
   let adminConfigPDA: PublicKey;
   let orderIdPDA: PublicKey;
-
+  let orderIdPDA1: PublicKey;
   let alice: Keypair;
   let tokenMintA: PublicKey;
   let aliceTokenAccountA: PublicKey;
@@ -76,6 +76,7 @@ describe("bridge", () => {
         const adminConfigAccount = await program.account.adminConfig.fetch(
           adminConfigPDA,
         );
+        console.log(adminConfigAccount.settet, "settet or not?");
         console.log("Program already initialized, skipping initialization");
       } catch {
         const init = await program.methods
@@ -140,6 +141,11 @@ describe("bridge", () => {
       token1 = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
       receiver = "0xc5c949ffcd5872731A39d9B33812B9a26b275ebd";
 
+      [orderIdPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("order_id")],
+        program.programId,
+      );
+      console.log(orderIdPDA);
       try {
         const orderIdAccount = await program.account.orderId.fetch(orderIdPDA);
         currentCounter = new BN(orderIdAccount.counter);
@@ -168,7 +174,7 @@ describe("bridge", () => {
         TOKEN_PROGRAM_ID,
       );
     });
-
+    console.log(orderIdPDA1, "order id pda");
     it("should create order for transfer", async () => {
       try {
         const createOrder = await program.methods
@@ -180,7 +186,7 @@ describe("bridge", () => {
           )
           .accountsStrict({
             user: alice.publicKey,
-            orderId: orderIdPDA,
+            orderId: orderIdPDA1,
             order: orderPDA,
             token0Mint: tokenMintA,
             makerTokenAccount: aliceTokenAccountA,
@@ -199,8 +205,8 @@ describe("bridge", () => {
       } catch (error) {
         console.log(error);
       }
-      // const orderAccount = await program.account.order.fetch(orderPDA);
-      // assert.equal(orderAccount.token1.toString(), token1.toString());
+      const orderAccount = await program.account.order.fetch(orderPDA);
+      assert.equal(orderAccount.token1.toString(), token1.toString());
     });
     // it("should cancel order for transfer", async () => {
     //   // const getCurrentUserOrder = await ;
