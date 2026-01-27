@@ -1,8 +1,8 @@
 use super::ErrorCode;
-use crate::{transfer_tokens, Order, OrderCreated, OrderId, StatusOrder};
+use crate::{transfer_tokens, AdminConfig, Order, OrderCreated, OrderId, StatusOrder};
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
-
 #[derive(Accounts)]
 
 pub struct CreateOrder<'info> {
@@ -28,31 +28,27 @@ pub struct CreateOrder<'info> {
     pub token_0_mint: InterfaceAccount<'info, Mint>,
     #[account(
         mut,
-        token::mint = token_0_mint,
-        token::authority = user,
-        token::token_program = token_program
+        associated_token::mint = token_0_mint,
+        associated_token::authority = user,
+        associated_token::token_program = token_program
     )]
     pub maker_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
         init_if_needed,
         payer = user,
-        token::mint = token_0_mint,
-        token::authority = vault_authority,
-        token::token_program = token_program,
-        seeds = [b"vault",token_0_mint.key().as_ref()],
-        bump
+        associated_token::mint = token_0_mint,
+        associated_token::authority = vault_authority,
+        associated_token::token_program = token_program,
     )]
     pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
-        seeds = [b"vault_authority"],
+        seeds = [b"adminconfig"],
         bump
     )]
-    /// CHECK: This is a token account that can hold any SPL token.
-    /// We verify it's a valid token account through CPI calls but don't
-    /// deserialize it as Account<TokenAccount> to support multiple token types
-    pub vault_authority: UncheckedAccount<'info>,
+    pub vault_authority: Account<'info, AdminConfig>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn create_order(
@@ -70,10 +66,10 @@ pub fn create_order(
     require!(_token1.len() == 42, ErrorCode::AddressLengthError);
     require!(_receiver.len() == 42, ErrorCode::AddressLengthError);
 
-    if order_id.counter == 0 {
-        order_id.counter = 1;
-        order_id.bump = ctx.bumps.order_id;
-    }
+    // if order_id.counter == 0 {
+    //     order_id.counter = 1;
+    //     order_id.bump = ctx.bumps.order_id;
+    // }
     order.id = order_id.counter;
     order.maker = ctx.accounts.user.key();
     order.token0 = ctx.accounts.token_0_mint.key();

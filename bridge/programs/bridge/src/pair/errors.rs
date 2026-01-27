@@ -26,4 +26,8 @@ pub enum ErrorCode {
     UnauthorizedAdmin,
     #[msg("ADmin already exist")]
     AdminAlreadyExists,
+    #[msg("Order status Error")]
+    OrderStatusError,
+    #[msg("Reentrancy Detected")]
+    ReentrancyDetected,
 }

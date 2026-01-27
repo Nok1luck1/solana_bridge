@@ -1,5 +1,5 @@
 use super::ErrorCode;
-use crate::{transfer_tokens, Order, OrderCancelled, StatusOrder};
+use crate::{transfer_tokens, AdminConfig, Order, OrderCancelled, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
@@ -43,26 +43,43 @@ pub struct CancelOrder<'info> {
         seeds = [b"vault_authority"],
         bump
     )]
-    /// CHECK: This is a token account that can hold any SPL token.
-    /// We verify it's a valid token account through CPI calls but don't
-    /// deserialize it as Account<TokenAccount> to support multiple token types
-    pub vault_authority: Signer<'info>,
+    pub vault_authority: Account<'info, AdminConfig>,
+    pub admin_ref: Signer<'info>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
 pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {
-    let order = &ctx.accounts.order;
-
+    let order = &mut ctx.accounts.order;
+    require!(!order.locked, ErrorCode::ReentrancyDetected);
+    order.locked = true;
+    require!(
+        order.status == StatusOrder::CREATED,
+        ErrorCode::OrderStatusError
+    );
+    require!(
+        order.maker == ctx.accounts.user.key(),
+        ErrorCode::UnauthorizedError
+    );
+    require!(
+        ctx.accounts
+            .vault_authority
+            .is_admin(&ctx.accounts.admin_ref.key()),
+        ErrorCode::UnauthorizedAdmin
+    );
+    require!(
+        ctx.accounts.vault_token_account.amount >= order.token0amount,
+        ErrorCode::InsufficientFundsError
+    );
     transfer_tokens(
         &ctx.accounts.vault_token_account,
         &ctx.accounts.maker_token_account,
-        &ctx.accounts.order.token0amount,
+        &order.token0amount,
         &ctx.accounts.token_0_mint,
-        &ctx.accounts.vault_authority,
+        &ctx.accounts.admin_ref,
         &ctx.accounts.token_program,
     )?;
-
+    order.status = StatusOrder::CANCELED;
     emit!(OrderCancelled {
         order_id: order.id,
         maker: order.maker,

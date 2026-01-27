@@ -2,7 +2,7 @@
 use anchor_lang::prelude::*;
 pub mod pair;
 pub use pair::*;
-declare_id!("HfjE4aLC7fwri7nwumWLYSnFSaNDcU17d7sh6YN9MtxS");
+declare_id!("HU6x5aCQjniMtNkyJ86XKoEqsMFMPF385Cj98y9oZxVq");
 
 #[program]
 pub mod bridge {
@@ -13,7 +13,7 @@ pub mod bridge {
         #[account(mut)]
         pub authority: Signer<'info>,
         #[account(
-        init_if_needed,
+        init,
         payer = authority,
         space = 8 + AdminConfig::INIT_SPACE,
         seeds = [b"adminconfig"],
@@ -21,13 +21,13 @@ pub mod bridge {
         )]
         pub admin_config: Account<'info, AdminConfig>,
         #[account(
-        init_if_needed,
+        init,
         payer = authority,
         space = 8 + OrderId::INIT_SPACE,
-        seeds = [b"orderid"],
+        seeds = [b"order_id"],
         bump
         )]
-        pub order_counter: Account<'info, OrderId>,
+        pub order_id: Account<'info, OrderId>,
         pub system_program: Program<'info, System>,
     }
 
@@ -37,9 +37,8 @@ pub mod bridge {
         admin_config.admins = admins;
         admin_config.settet = true;
         admin_config.bump = ctx.bumps.admin_config;
-        let order_counter = &mut ctx.accounts.order_counter;
-        order_counter.counter = 0;
-        order_counter.bump = ctx.bumps.order_counter;
+        let order_id = &mut ctx.accounts.order_id;
+        order_id.counter = 1;
         Ok(())
     }
     pub fn order_for_transfer(
