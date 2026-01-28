@@ -66,10 +66,6 @@ pub fn create_order(
     require!(_token1.len() == 42, ErrorCode::AddressLengthError);
     require!(_receiver.len() == 42, ErrorCode::AddressLengthError);
 
-    // if order_id.counter == 0 {
-    //     order_id.counter = 1;
-    //     order_id.bump = ctx.bumps.order_id;
-    // }
     order.id = order_id.counter;
     order.maker = ctx.accounts.user.key();
     order.token0 = ctx.accounts.token_0_mint.key();
@@ -78,6 +74,7 @@ pub fn create_order(
     order.token0amount = _token0amount;
     order.token1amount = _token1amount;
     order.status = StatusOrder::CREATED;
+    order.locked = false;
     order.bump = ctx.bumps.order;
     order.timestart = Clock::get()?.unix_timestamp;
 
@@ -103,4 +100,23 @@ pub fn create_order(
         receiver: order.receiver.clone()
     });
     Ok(())
+}
+pub fn transfer_tokens<'info>(
+    from: &InterfaceAccount<'info, TokenAccount>,
+    to: &InterfaceAccount<'info, TokenAccount>,
+    amount: &u64,
+    mint: &InterfaceAccount<'info, Mint>,
+    authority: &Signer<'info>,
+    token_program: &Interface<'info, TokenInterface>,
+) -> Result<()> {
+    let transfer_accounts = TransferChecked {
+        from: from.to_account_info(),
+        mint: mint.to_account_info(),
+        to: to.to_account_info(),
+        authority: authority.to_account_info(),
+    };
+
+    let cpi_ctx = CpiContext::new(token_program.to_account_info(), transfer_accounts);
+
+    transfer_checked(cpi_ctx, *amount, mint.decimals)
 }

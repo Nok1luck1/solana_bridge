@@ -1,7 +1,10 @@
 use super::ErrorCode;
 use crate::{transfer_tokens, AdminConfig, Order, OrderCancelled, StatusOrder};
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount, TokenInterface},
+};
 
 #[derive(Accounts)]
 pub struct CancelOrder<'info> {
@@ -24,19 +27,17 @@ pub struct CancelOrder<'info> {
 
     #[account(
         mut,
-        token::mint = token_0_mint,
-        token::authority = user,
-        token::token_program = token_program
+        associated_token::mint = token_0_mint,
+        associated_token::authority = user,
+        associated_token::token_program = token_program
     )]
     pub maker_token_account: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         mut,
-        token::mint = token_0_mint,
-        token::authority = vault_authority,
-        token::token_program = token_program,
-        seeds = [b"vault", token_0_mint.key().as_ref()],
-        bump
+        associated_token::mint = token_0_mint,
+        associated_token::authority = vault_authority,
+        associated_token::token_program = token_program,
     )]
     pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
@@ -47,6 +48,7 @@ pub struct CancelOrder<'info> {
     pub admin_ref: Signer<'info>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {

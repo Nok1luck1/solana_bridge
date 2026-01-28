@@ -2,7 +2,7 @@
 use anchor_lang::prelude::*;
 pub mod pair;
 pub use pair::*;
-declare_id!("BTsFYQMPkvgeXEs9fBbFbjQiHERW5q6ernKGWt1X9Zvi");
+declare_id!("HM2D21Bea1CUAUfucqHzDU6sq2EwuL6b4ECWD2Ew4kKm");
 
 #[program]
 pub mod bridge {
@@ -34,6 +34,7 @@ pub mod bridge {
     pub fn initialize(ctx: Context<Initialize>, admins: Vec<Pubkey>) -> Result<()> {
         require!(admins.len() <= 10, errors::ErrorCode::TooManyAdmins);
         let admin_config = &mut ctx.accounts.admin_config;
+        require!(admin_config.settet == false, errors::ErrorCode::CustomError);
         admin_config.admins = admins;
         admin_config.settet = true;
         admin_config.bump = ctx.bumps.admin_config;
