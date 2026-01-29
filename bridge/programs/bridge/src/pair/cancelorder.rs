@@ -1,5 +1,5 @@
 use super::ErrorCode;
-use crate::{transfer_tokens, AdminConfig, Order, OrderCancelled, StatusOrder};
+use crate::{order::transfer_tokens, AdminConfig, Order, OrderCancelled, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,

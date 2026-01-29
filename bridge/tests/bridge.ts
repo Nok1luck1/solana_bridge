@@ -33,8 +33,8 @@ describe("bridge", () => {
   let tokenMintA: PublicKey;
   let aliceTokenAccountA: PublicKey;
 
-  let token0amount = new BN("100099");
-  let token1amount = new BN("100099");
+  let token0amount = new BN("1000000");
+  let token1amount = new BN("1000000");
   let token1: string;
   let receiver: string;
 
@@ -232,7 +232,7 @@ describe("bridge", () => {
         receiver: specificOrder.receiver,
         token0Amount: specificOrder.token0Amount.toString(),
         token1Amount: specificOrder.token1Amount.toString(),
-        counter: specificOrder.id,
+        counter: specificOrder.id.toString(),
       });
 
     });
@@ -244,8 +244,26 @@ describe("bridge", () => {
         const mint = new PublicKey(v.account.data.slice(0, 32));
         console.log(`${mint.toString().slice(0, 8)}...: ${balance.value.uiAmount}`);
       }));
-
-      // const getCurrentUserOrder = await ;
+      const customordernumber = new BN(26);
+      const [getCurrentUserOrderPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("order"), alice.publicKey.toBuffer(), customordernumber.toArrayLike(Buffer, "le", 8),],
+        program.programId,
+      );
+      const check1 = await connection.getAccountInfo(getCurrentUserOrderPDA);
+      console.log(check1)
+      const allOrders = await program.account.order.all();
+      console.log(allOrders)
+      const aliceOrders = allOrders.filter(o => o.account.maker.toString() === alice.publicKey.toString());
+      console.log("У Алисы ордера с ID:", aliceOrders.map(o => o.account.id.toString()));
+      // const specificOrder = await program.account.order.fetch(getCurrentUserOrderPDA);
+      // console.log("Order details:", {
+      //   maker: specificOrder.maker.toString(),
+      //   token1: specificOrder.token1,
+      //   receiver: specificOrder.receiver,
+      //   token0Amount: specificOrder.token0Amount.toString(),
+      //   token1Amount: specificOrder.token1Amount.toString(),
+      //   counter: specificOrder.id,
+      // });
       // const cancelOrder = await program.methods
       //   .cancelExistingOrder()
       //   .accountsStrict({
