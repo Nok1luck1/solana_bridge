@@ -166,7 +166,7 @@ describe("bridge", () => {
       console.log(orderIdPDA);
       try {
         const orderIdAccount = await program.account.orderId.fetch(orderIdPDA);
-        console.log(orderIdAccount.counter.toString(), "counter acc")
+        console.log(orderIdAccount.counter.toString(), "counter acc");
         currentCounter = orderIdAccount.counter;
       } catch {
         currentCounter = new BN(1);
@@ -197,12 +197,7 @@ describe("bridge", () => {
     it("should create order for transfer", async () => {
       try {
         const createOrder = await program.methods
-          .orderForTransfer(
-            token1,
-            receiver,
-            token0amount,
-            token1amount,
-          )
+          .orderForTransfer(token1, receiver, token0amount, token1amount)
           .accountsStrict({
             user: alice.publicKey,
             orderId: orderIdPDA,
@@ -234,27 +229,38 @@ describe("bridge", () => {
         token1Amount: specificOrder.token1Amount.toString(),
         counter: specificOrder.id.toString(),
       });
-
     });
     it("should cancel order for transfer", async () => {
-      const vaults = await connection.getTokenAccountsByOwner(adminConfigPDA, { programId: TOKEN_PROGRAM_ID });
+      const vaults = await connection.getTokenAccountsByOwner(adminConfigPDA, {
+        programId: TOKEN_PROGRAM_ID,
+      });
       console.log(`Vaults: ${vaults.value.length}`);
-      await Promise.all(vaults.value.map(async (v) => {
-        const balance = await connection.getTokenAccountBalance(v.pubkey);
-        const mint = new PublicKey(v.account.data.slice(0, 32));
-        console.log(`${mint.toString().slice(0, 8)}...: ${balance.value.uiAmount}`);
-      }));
+      await Promise.all(
+        vaults.value.map(async (v) => {
+          const balance = await connection.getTokenAccountBalance(v.pubkey);
+          const mint = new PublicKey(v.account.data.slice(0, 32));
+          console.log(
+            `${mint.toString().slice(0, 8)}...: ${balance.value.uiAmount}`,
+          );
+        }),
+      );
       const customordernumber = new BN(26);
       const [getCurrentUserOrderPDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("order"), alice.publicKey.toBuffer(), customordernumber.toArrayLike(Buffer, "le", 8),],
+        [
+          Buffer.from("order"),
+          alice.publicKey.toBuffer(),
+          customordernumber.toArrayLike(Buffer, "le", 8),
+        ],
         program.programId,
       );
       const check1 = await connection.getAccountInfo(getCurrentUserOrderPDA);
-      console.log(check1)
+      console.log(check1);
       const allOrders = await program.account.order.all();
-      console.log(allOrders)
-      const aliceOrders = allOrders.filter(o => o.account.maker.toString() === alice.publicKey.toString());
-      console.log("У Алисы ордера с ID:", aliceOrders.map(o => o.account.id.toString()));
+      console.log(allOrders);
+      const aliceOrders = allOrders.filter(
+        (o) => o.account.maker.toString() === alice.publicKey.toString(),
+      );
+      //console.log("У Алисы ордера с ID:", aliceOrders.map(o => o.account.id.toString()));
       // const specificOrder = await program.account.order.fetch(getCurrentUserOrderPDA);
       // console.log("Order details:", {
       //   maker: specificOrder.maker.toString(),
@@ -264,27 +270,28 @@ describe("bridge", () => {
       //   token1Amount: specificOrder.token1Amount.toString(),
       //   counter: specificOrder.id,
       // });
-      // const cancelOrder = await program.methods
-      //   .cancelExistingOrder()
-      //   .accountsStrict({
-      //     user: alice.publicKey,
-      //     order: orderPDA,
-      //     token0Mint: tokenMintA,
-      //     makerTokenAccount: aliceTokenAccountA,
-      //     tokenProgram: TOKEN_PROGRAM_ID,
-      //     vaultTokenAccount: vaultATA,
-      //     vaultAuthority: adminConfigPDA,
-      //     systemProgram: SystemProgram.programId,
-      //     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID
-      //   })
-      //   .signers([alice])
-      //   .rpc({
-      //     skipPreflight: false,
-      //     commitment: "confirmed",
-      //   });
+      const cancelOrder = await program.methods
+        .cancelExistingOrder()
+        .accountsStrict({
+          user: alice.publicKey,
+          order: orderPDA,
+          token0Mint: tokenMintA,
+          makerTokenAccount: aliceTokenAccountA,
+          vaultTokenAccount: vaultATA,
+          vaultAuthority: adminConfigPDA,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          adminRef: admin1.publicKey,
+          systemProgram: SystemProgram.programId,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+        .signers([admin1, alice])
+        .rpc({
+          skipPreflight: false,
+          commitment: "confirmed",
+        });
 
-      // const orderAccount = await program.account.order.fetch(orderPDA);
-      // assert.equal(orderAccount.token1.toString(), token1.toString());
+      const orderAccount = await program.account.order.fetch(orderPDA);
+      assert.equal(orderAccount.token1.toString(), token1.toString());
     });
   });
 });

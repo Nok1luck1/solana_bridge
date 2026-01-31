@@ -78,7 +78,7 @@ pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {
         &ctx.accounts.maker_token_account,
         &order.token0amount,
         &ctx.accounts.token_0_mint,
-        &ctx.accounts.admin_ref,
+        &ctx.accounts.user,
         &ctx.accounts.token_program,
     )?;
     order.status = StatusOrder::CANCELED;
