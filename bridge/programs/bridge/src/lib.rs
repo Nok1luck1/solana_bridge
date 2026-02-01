@@ -70,6 +70,7 @@ pub mod bridge {
             timestart,
         )
     }
+    ///cancel order can be called only from admin because only admin can remove order from execution in bridge executor program
     pub fn cancel_existing_order(ctx: Context<CancelOrder>) -> Result<()> {
         cancel_order(ctx)
     }

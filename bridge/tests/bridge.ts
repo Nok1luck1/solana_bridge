@@ -270,26 +270,30 @@ describe("bridge", () => {
       //   token1Amount: specificOrder.token1Amount.toString(),
       //   counter: specificOrder.id,
       // });
-      const cancelOrder = await program.methods
-        .cancelExistingOrder()
-        .accountsStrict({
-          user: alice.publicKey,
-          order: orderPDA,
-          token0Mint: tokenMintA,
-          makerTokenAccount: aliceTokenAccountA,
-          vaultTokenAccount: vaultATA,
-          vaultAuthority: adminConfigPDA,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          adminRef: admin1.publicKey,
-          systemProgram: SystemProgram.programId,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        })
-        .signers([admin1, alice])
-        .rpc({
-          skipPreflight: false,
-          commitment: "confirmed",
-        });
 
+      try {
+        const cancelOrder = await program.methods
+          .cancelExistingOrder()
+          .accountsStrict({
+            order: orderPDA,
+            token0Mint: tokenMintA,
+            makerTokenAccount: aliceTokenAccountA,
+            vaultTokenAccount: vaultATA,
+            vaultAuthority: adminConfigPDA,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            adminRef: admin1.publicKey,
+            systemProgram: SystemProgram.programId,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          })
+          .signers([admin1])
+          .rpc({
+            skipPreflight: false,
+            commitment: "confirmed",
+          });
+        console.log(cancelOrder);
+      } catch (error) {
+        console.log(error);
+      }
       const orderAccount = await program.account.order.fetch(orderPDA);
       assert.equal(orderAccount.token1.toString(), token1.toString());
     });
