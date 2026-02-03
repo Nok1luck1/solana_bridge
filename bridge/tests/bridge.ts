@@ -29,6 +29,7 @@ describe("bridge", () => {
   let admin1: Keypair;
   let adminConfigPDA: PublicKey;
   let orderIdPDA: PublicKey;
+  let orderIdPDAlatest: PublicKey;
   let alice: Keypair;
   let tokenMintA: PublicKey;
   let aliceTokenAccountA: PublicKey;
@@ -40,6 +41,7 @@ describe("bridge", () => {
 
   let currentCounter = new BN("1");
   let orderPDA: PublicKey;
+  let orderExecutionPDA: PublicKey;
   let vaultPDA: PublicKey;
   let vaultATA: PublicKey;
   async function getAllOrders(filters = []) {
@@ -260,16 +262,6 @@ describe("bridge", () => {
       const aliceOrders = allOrders.filter(
         (o) => o.account.maker.toString() === alice.publicKey.toString(),
       );
-      //console.log("У Алисы ордера с ID:", aliceOrders.map(o => o.account.id.toString()));
-      // const specificOrder = await program.account.order.fetch(getCurrentUserOrderPDA);
-      // console.log("Order details:", {
-      //   maker: specificOrder.maker.toString(),
-      //   token1: specificOrder.token1,
-      //   receiver: specificOrder.receiver,
-      //   token0Amount: specificOrder.token0Amount.toString(),
-      //   token1Amount: specificOrder.token1Amount.toString(),
-      //   counter: specificOrder.id,
-      // });
       try {
         const cancelOrder = await program.methods
           .cancelExistingOrder()
@@ -284,6 +276,44 @@ describe("bridge", () => {
             systemProgram: SystemProgram.programId,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           })
+          .signers([admin1])
+          .rpc({
+            skipPreflight: false,
+            commitment: "confirmed",
+          });
+        console.log(cancelOrder);
+      } catch (error) {
+        console.log(error);
+      }
+      const orderAccount = await program.account.order.fetch(orderPDA);
+      assert.equal(orderAccount.token1.toString(), token1.toString());
+    });
+    it("should execute order for transfer", async () => {
+      const vaults = await connection.getTokenAccountsByOwner(adminConfigPDA, {
+        programId: TOKEN_PROGRAM_ID,
+      });
+      [orderIdPDAlatest] = PublicKey.findProgramAddressSync(
+        [Buffer.from("order_id")],
+        program.programId,
+      );
+      const orderIdAccount = await program.account.orderId.fetch(orderIdPDAlatest);
+      console.log(orderIdAccount.counter.toString(), "counter acc");
+      currentCounter = orderIdAccount.counter;
+      [orderExecutionPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("order_execution"), admin1.publicKey, currentCounter],
+        program.programId,
+      );
+      const timeStart = new BN("123333333")
+      try {
+        const cancelOrder = await program.methods
+          .orderForExecution(alice.publicKey, token0amount, token1amount, token1, receiver, timeStart)
+          .accountsStrict({
+            admin: admin1,
+            adminConfig: adminConfigPDA,
+            orderId: orderIdPDAlatest,
+
+          })
+
           .signers([admin1])
           .rpc({
             skipPreflight: false,
