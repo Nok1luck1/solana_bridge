@@ -296,22 +296,41 @@ describe("bridge", () => {
         [Buffer.from("order_id")],
         program.programId,
       );
-      const orderIdAccount = await program.account.orderId.fetch(orderIdPDAlatest);
+      const orderIdAccount = await program.account.orderId.fetch(
+        orderIdPDAlatest,
+      );
       console.log(orderIdAccount.counter.toString(), "counter acc");
       currentCounter = orderIdAccount.counter;
       [orderExecutionPDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("order_execution"), admin1.publicKey, currentCounter],
+        [
+          Buffer.from("order_execution"),
+          admin1.publicKey.toBuffer(),
+          currentCounter.toArrayLike(Buffer, "le", 8),
+        ],
         program.programId,
       );
-      const timeStart = new BN("123333333")
+      const timeStart = new BN("123333333");
       try {
-        const cancelOrder = await program.methods
-          .orderForExecution(alice.publicKey, token0amount, token1amount, token1, receiver, timeStart)
+        const executionOrder = await program.methods
+          .orderForExecution(
+            alice.publicKey,
+            token0amount,
+            token1amount,
+            token1,
+            receiver,
+            timeStart,
+          )
           .accountsStrict({
-            admin: admin1,
-            adminConfig: adminConfigPDA,
             orderId: orderIdPDAlatest,
-
+            orderExecution: orderExecutionPDA,
+            token1Mint: tokenMintA,
+            receiverTokenAccount: aliceTokenAccountA,
+            vaultTokenProgram: vaultATA,
+            admin: admin1.publicKey,
+            adminConfig: adminConfigPDA,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           })
 
           .signers([admin1])
@@ -319,7 +338,7 @@ describe("bridge", () => {
             skipPreflight: false,
             commitment: "confirmed",
           });
-        console.log(cancelOrder);
+        console.log(executionOrder);
       } catch (error) {
         console.log(error);
       }
