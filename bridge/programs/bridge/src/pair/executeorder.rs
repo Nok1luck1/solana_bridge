@@ -3,18 +3,11 @@ use crate::{
     order::transfer_tokens, AdminConfig, OrderCompleted, OrderExecution, OrderId, StatusOrder,
 };
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 #[derive(Accounts)]
 pub struct ExecuteOrder<'info> {
-    #[account(mut)]
-    pub admin: Signer<'info>,
-    #[account(
-        seeds = [b"admin_config"],
-        bump = admin_config.bump,
-        constraint = admin_config.is_admin(&admin.key()) @ ErrorCode::UnauthorizedAdmin,
-    )]
-    pub admin_config: Account<'info, AdminConfig>,
     #[account(
         init_if_needed,
         payer = admin,
@@ -39,16 +32,18 @@ pub struct ExecuteOrder<'info> {
         token::token_program = token_program
     )]
     pub vault_token_program: InterfaceAccount<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub admin: Signer<'info>,
     #[account(
-        seeds = [b"vault_authority"],
-        bump
+        seeds = [b"admin_config"],
+        bump = admin_config.bump,
+        constraint = admin_config.is_admin(&admin.key()) @ ErrorCode::UnauthorizedAdmin,
     )]
-    /// CHECK: This is a token account that can hold any SPL token.
-    /// We verify it's a valid token account through CPI calls but don't
-    /// deserialize it as Account<TokenAccount> to support multiple token types
-    pub vault_authority: Signer<'info>,
+    pub admin_config: Account<'info, AdminConfig>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 pub fn execute_order(
     ctx: Context<ExecuteOrder>,
@@ -74,13 +69,24 @@ pub fn execute_order(
         _order_id.counter = 1;
         _order_id.bump = ctx.bumps.order_id;
     }
-    transfer_tokens(
-        &ctx.accounts.vault_token_program,
-        &ctx.accounts.receiver_token_account,
-        &_token1amount,
-        &ctx.accounts.token_1_mint,
-        &ctx.accounts.vault_authority,
-        &ctx.accounts.token_program,
+
+    let bump = ctx.bumps.admin;
+    let seeds = &[b"adminconfig".as_ref(), &[bump]];
+    let signer_seeds = &[&seeds[..]];
+
+    anchor_spl::token_interface::transfer_checked(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            anchor_spl::token_interface::TransferChecked {
+                from: ctx.accounts.vault_token_program.to_account_info(),
+                to: ctx.accounts.receiver_token_account.to_account_info(),
+                authority: ctx.accounts.admin_config.to_account_info(),
+                mint: ctx.accounts.token_1_mint.to_account_info(),
+            },
+            signer_seeds,
+        ),
+        _order.token1amount,
+        ctx.accounts.token_1_mint.decimals,
     )?;
     _order.id = _order_id.counter;
     _order.maker = _sender.clone();

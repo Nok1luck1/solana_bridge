@@ -36,12 +36,14 @@ pub struct CancelOrder<'info> {
         associated_token::token_program = token_program,
     )]
     pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(mut)]
+    pub admin: Signer<'info>,
     #[account(
-        seeds = [b"adminconfig"],
-        bump
+        seeds = [b"admin_config"],
+        bump = admin_config.bump,
+        constraint = admin_config.is_admin(&admin.key()) @ ErrorCode::UnauthorizedAdmin,
     )]
-    pub vault_authority: Account<'info, AdminConfig>,
-    pub admin_ref: Signer<'info>,
+    pub admin_config: Account<'info, AdminConfig>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -66,7 +68,7 @@ pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {
         ErrorCode::InsufficientFundsError
     );
 
-    let bump = ctx.bumps.vault_authority;
+    let bump = ctx.bumps.admin_config;
     let seeds = &[b"adminconfig".as_ref(), &[bump]];
     let signer_seeds = &[&seeds[..]];
 
@@ -76,7 +78,7 @@ pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {
             anchor_spl::token_interface::TransferChecked {
                 from: ctx.accounts.vault_token_account.to_account_info(),
                 to: ctx.accounts.maker_token_account.to_account_info(),
-                authority: ctx.accounts.vault_authority.to_account_info(),
+                authority: ctx.accounts.admin_config.to_account_info(),
                 mint: ctx.accounts.token_0_mint.to_account_info(),
             },
             signer_seeds,
