@@ -19,16 +19,18 @@ pub struct ExecuteOrder<'info> {
     #[account(
         init,
         payer = admin,
-        space = OrderExecution::INIT_SPACE,
+        space = 8+OrderExecution::INIT_SPACE,
         seeds = [b"order_execution",admin.key().as_ref(),order_id.counter.to_le_bytes().as_ref()],
         bump
     )]
     pub order_execution: Account<'info, OrderExecution>,
     pub token_1_mint: InterfaceAccount<'info, Mint>,
+    #[account(mut)]
     pub receiver_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
+        mut,
         token::mint = token_1_mint,
-        token::authority = vault_authority,
+        token::authority = admin_config,
         token::token_program = token_program
     )]
     pub vault_token_program: InterfaceAccount<'info, TokenAccount>,
@@ -36,9 +38,9 @@ pub struct ExecuteOrder<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
-        seeds = [b"admin_config"],
+        seeds = [b"adminconfig"],
         bump = admin_config.bump,
-        constraint = admin_config.is_admin(&admin.key()) @ ErrorCode::UnauthorizedAdmin,
+        //constraint = admin_config.is_admin(&admin.key()) @ ErrorCode::UnauthorizedAdmin,
     )]
     pub admin_config: Account<'info, AdminConfig>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -59,8 +61,8 @@ pub fn execute_order(
 
     require!(_token0amount > 0, ErrorCode::ZeroAmountError);
     require!(_token1amount > 0, ErrorCode::ZeroAmountError);
-    require!(_token0.len() == 20, ErrorCode::AddressLengthError);
-    require!(_sender.len() == 20, ErrorCode::AddressLengthError);
+    require!(_token0.len() == 42, ErrorCode::AddressLengthError);
+    require!(_sender.len() == 42, ErrorCode::AddressLengthError);
     require!(
         ctx.accounts.vault_token_program.amount >= _order.token1amount,
         ErrorCode::InsufficientFundsError
@@ -70,9 +72,9 @@ pub fn execute_order(
         _order_id.bump = ctx.bumps.order_id;
     }
 
-    let bump = ctx.bumps.admin;
+    let bump = ctx.accounts.admin_config.bump;
     let seeds = &[b"adminconfig".as_ref(), &[bump]];
-    let signer_seeds = &[&seeds[..]];
+    let signer_seeds: &[&[&[u8]]] = &[seeds];
 
     anchor_spl::token_interface::transfer_checked(
         CpiContext::new_with_signer(

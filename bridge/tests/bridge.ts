@@ -270,9 +270,9 @@ describe("bridge", () => {
             token0Mint: tokenMintA,
             makerTokenAccount: aliceTokenAccountA,
             vaultTokenAccount: vaultATA,
-            vaultAuthority: adminConfigPDA,
+            admin: adminConfigPDA,
             tokenProgram: TOKEN_PROGRAM_ID,
-            adminRef: admin1.publicKey,
+            adminConfig: admin1.publicKey,
             systemProgram: SystemProgram.programId,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           })
@@ -332,7 +332,6 @@ describe("bridge", () => {
             systemProgram: SystemProgram.programId,
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           })
-
           .signers([admin1])
           .rpc({
             skipPreflight: false,
