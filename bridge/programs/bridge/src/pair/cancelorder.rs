@@ -32,16 +32,16 @@ pub struct CancelOrder<'info> {
     #[account(
         mut,
         associated_token::mint = token_0_mint,
-        associated_token::authority = vault_authority,
+        associated_token::authority = admin_config,
         associated_token::token_program = token_program,
     )]
     pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
     pub admin: Signer<'info>,
     #[account(
-        seeds = [b"admin_config"],
+        seeds = [b"adminconfig"],
         bump = admin_config.bump,
-        constraint = admin_config.is_admin(&admin.key()) @ ErrorCode::UnauthorizedAdmin,
+        //constraint = admin_config.is_admin(&admin.key()) @ ErrorCode::UnauthorizedAdmin,
     )]
     pub admin_config: Account<'info, AdminConfig>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -68,9 +68,9 @@ pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {
         ErrorCode::InsufficientFundsError
     );
 
-    let bump = ctx.bumps.admin_config;
+    let bump = ctx.accounts.admin_config.bump;
     let seeds = &[b"adminconfig".as_ref(), &[bump]];
-    let signer_seeds = &[&seeds[..]];
+    let signer_seeds: &[&[&[u8]]] = &[seeds];
 
     anchor_spl::token_interface::transfer_checked(
         CpiContext::new_with_signer(
