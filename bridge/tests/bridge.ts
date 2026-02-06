@@ -109,6 +109,13 @@ describe("bridge", () => {
         admin3.publicKey,
         2 * LAMPORTS_PER_SOL,
       );
+      const latestBlockhash = await provider.connection.getLatestBlockhash();
+
+      await provider.connection.confirmTransaction({
+        signature: airdropSig3,
+        blockhash: latestBlockhash.blockhash,
+        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+      });
 
       try {
         const adminConfigAccount = await program.account.adminConfig.fetch(
@@ -118,7 +125,7 @@ describe("bridge", () => {
         console.log("Program already initialized, skipping initialization");
       } catch {
         const init = await program.methods
-          .initialize([admin1.publicKey])
+          .initialize([admin1.publicKey, admin2.publicKey, admin3.publicKey])
           .accounts({ authority: admin1.publicKey })
           .signers([admin1])
           .rpc({
