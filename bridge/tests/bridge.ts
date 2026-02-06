@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { BN } from "bn.js";
@@ -21,16 +21,6 @@ import type { Bridge } from "../target/types/bridge";
 
 const KEYS_DIR = "tests/keys";
 
-function saveKeypair(keypair: Keypair, filename: string) {
-  if (!existsSync(KEYS_DIR)) {
-    mkdirSync(KEYS_DIR, { recursive: true });
-  }
-
-  const keypairArray = Array.from(keypair.secretKey);
-  writeFileSync(`${KEYS_DIR}/${filename}`, JSON.stringify(keypairArray));
-  console.log(`Keypair saved to ${KEYS_DIR}/${filename}`);
-}
-
 function loadKeypair(filename: string): Keypair {
   const path = `${KEYS_DIR}/${filename}`;
   if (!existsSync(path)) {
@@ -39,10 +29,6 @@ function loadKeypair(filename: string): Keypair {
 
   const keypairData = JSON.parse(readFileSync(path, "utf-8"));
   return Keypair.fromSecretKey(new Uint8Array(keypairData));
-}
-
-function keypairExists(filename: string): boolean {
-  return existsSync(`${KEYS_DIR}/${filename}`);
 }
 
 describe("bridge", () => {
@@ -74,16 +60,6 @@ describe("bridge", () => {
   let vaultPDA: PublicKey;
   let vaultATA: PublicKey;
 
-  async function getAllOrders(filters = []) {
-    try {
-      const orders = await program.account.order.all(filters);
-      return orders;
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      return [];
-    }
-  }
-
   before(async () => {
     provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
@@ -105,80 +81,52 @@ describe("bridge", () => {
 
   describe("Initialization", () => {
     it("should initialize program with admin", async () => {
+      // const adminConfigAccount = await program.account.adminConfig.fetch(
+      //   adminConfigPDA,
+      // );
+
+      admin1 = loadKeypair("admin1.json");
+      admin2 = loadKeypair("admin2.json");
+      admin3 = loadKeypair("admin3.json");
+
+      console.log("Loaded admins:", {
+        admin1: admin1.publicKey.toString(),
+        admin2: admin2.publicKey.toString(),
+        admin3: admin3.publicKey.toString(),
+      });
+
+      const airdropSig = await provider.connection.requestAirdrop(
+        admin1.publicKey,
+        2 * LAMPORTS_PER_SOL,
+      );
+
+      const airdropSig2 = await provider.connection.requestAirdrop(
+        admin2.publicKey,
+        2 * LAMPORTS_PER_SOL,
+      );
+
+      const airdropSig3 = await provider.connection.requestAirdrop(
+        admin3.publicKey,
+        2 * LAMPORTS_PER_SOL,
+      );
+
       try {
         const adminConfigAccount = await program.account.adminConfig.fetch(
           adminConfigPDA,
         );
-        console.log("Program already initialized, loading admins from files");
-
-        // ===== ЗАГРУЗКА СУЩЕСТВУЮЩИХ АДМИНОВ =====
-        admin1 = loadKeypair("admin1.json");
-        admin2 = loadKeypair("admin2.json");
-        admin3 = loadKeypair("admin3.json");
-
-        console.log("Loaded admins:", {
-          admin1: admin1.publicKey.toString(),
-          admin2: admin2.publicKey.toString(),
-          admin3: admin3.publicKey.toString(),
-        });
-
-        // Проверь баланс и при необходимости пополни
-        const balance1 = await connection.getBalance(admin1.publicKey);
-        if (balance1 < LAMPORTS_PER_SOL) {
-          const airdropSig = await provider.connection.requestAirdrop(
-            admin1.publicKey,
-            2 * LAMPORTS_PER_SOL,
-          );
-          await provider.connection.confirmTransaction(airdropSig, "confirmed");
-        }
-      } catch (error) {
-        console.log("Initializing program with new admins");
-
-        admin1 = Keypair.generate();
-        admin2 = Keypair.generate();
-        admin3 = Keypair.generate();
-
-        saveKeypair(admin1, "admin1.json");
-        saveKeypair(admin2, "admin2.json");
-        saveKeypair(admin3, "admin3.json");
-
-        // Airdrop для админов
-        const airdropSig = await provider.connection.requestAirdrop(
-          admin1.publicKey,
-          2 * LAMPORTS_PER_SOL,
-        );
-        await provider.connection.confirmTransaction(airdropSig, "confirmed");
-
-        const airdropSig2 = await provider.connection.requestAirdrop(
-          admin2.publicKey,
-          2 * LAMPORTS_PER_SOL,
-        );
-        await provider.connection.confirmTransaction(airdropSig2, "confirmed");
-
-        const airdropSig3 = await provider.connection.requestAirdrop(
-          admin3.publicKey,
-          2 * LAMPORTS_PER_SOL,
-        );
-        await provider.connection.confirmTransaction(airdropSig3, "confirmed");
-
-        console.log("New admins created:", {
-          admin1: admin1.publicKey.toString(),
-          admin2: admin2.publicKey.toString(),
-          admin3: admin3.publicKey.toString(),
-        });
-
+        console.log(adminConfigAccount.settet, "settet or not?");
+        console.log("Program already initialized, skipping initialization");
+      } catch {
         const init = await program.methods
-          .initialize([admin1.publicKey, admin2.publicKey, admin3.publicKey])
+          .initialize([admin1.publicKey])
           .accounts({ authority: admin1.publicKey })
           .signers([admin1])
-          .rpc();
+          .rpc({
+            commitment: "confirmed",
+            preflightCommitment: "confirmed",
+            skipPreflight: false,
+          });
         console.log("Program initialized:", init);
-        const latestBlockhash = await provider.connection.getLatestBlockhash();
-        await provider.connection.confirmTransaction({
-          signature: init,
-          blockhash: latestBlockhash.blockhash,
-          lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-        });
 
         const adminConfigAccount = await program.account.adminConfig.fetch(
           adminConfigPDA,
@@ -198,7 +146,6 @@ describe("bridge", () => {
         alice.publicKey,
         2 * LAMPORTS_PER_SOL,
       );
-      await provider.connection.confirmTransaction(airdropSig, "confirmed");
 
       tokenMintA = await createMint(
         connection,
@@ -308,19 +255,19 @@ describe("bridge", () => {
     });
 
     it("should cancel order for transfer", async () => {
-      const vaults = await connection.getTokenAccountsByOwner(adminConfigPDA, {
-        programId: TOKEN_PROGRAM_ID,
-      });
-      console.log(`Vaults: ${vaults.value.length}`);
-      await Promise.all(
-        vaults.value.map(async (v) => {
-          const balance = await connection.getTokenAccountBalance(v.pubkey);
-          const mint = new PublicKey(v.account.data.slice(0, 32));
-          console.log(
-            `${mint.toString().slice(0, 8)}...: ${balance.value.uiAmount}`,
-          );
-        }),
-      );
+      // const vaults = await connection.getTokenAccountsByOwner(adminConfigPDA, {
+      //   programId: TOKEN_PROGRAM_ID,
+      // });
+      // console.log(`Vaults: ${vaults.value.length}`);
+      // await Promise.all(
+      //   vaults.value.map(async (v) => {
+      //     const balance = await connection.getTokenAccountBalance(v.pubkey);
+      //     const mint = new PublicKey(v.account.data.slice(0, 32));
+      //     console.log(
+      //       `${mint.toString().slice(0, 8)}...: ${balance.value.uiAmount}`,
+      //     );
+      //   }),
+      // );
 
       try {
         const cancelOrder = await program.methods
@@ -330,7 +277,7 @@ describe("bridge", () => {
             token0Mint: tokenMintA,
             makerTokenAccount: aliceTokenAccountA,
             vaultTokenAccount: vaultATA,
-            admin: adminConfigPDA,
+            admin: admin1.publicKey,
             tokenProgram: TOKEN_PROGRAM_ID,
             adminConfig: admin1.publicKey,
             systemProgram: SystemProgram.programId,
@@ -385,8 +332,6 @@ describe("bridge", () => {
       admin_config_array.admins.forEach((admin, index) => {
         console.log(`Admin ${index}:`, admin.toString());
       });
-
-      // Проверка что admin1 есть в списке
       const isAdmin = admin_config_array.admins.some((a) =>
         a.equals(admin1.publicKey),
       );
@@ -428,8 +373,3 @@ describe("bridge", () => {
     });
   });
 });
-// ```
-
-// **Не забудь добавить в `.gitignore`:**
-// ```
-// tests/keys/
