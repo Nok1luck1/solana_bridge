@@ -1,5 +1,5 @@
 use super::ErrorCode;
-use crate::{order::transfer_tokens, AdminConfig, Order, OrderCancelled, StatusOrder};
+use crate::{AdminConfig, Order, OrderCancelled, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -51,18 +51,17 @@ pub struct CancelOrder<'info> {
 
 pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {
     let order = &mut ctx.accounts.order;
+    let admin_conf = &ctx.accounts.admin_config;
     require!(!order.locked, ErrorCode::ReentrancyDetected);
     order.locked = true;
     require!(
         order.status == StatusOrder::CREATED,
         ErrorCode::OrderStatusError
     );
-    // require!(
-    //     ctx.accounts
-    //         .vault_authority
-    //         .is_admin(&ctx.accounts.admin_ref.key()),
-    //     ErrorCode::UnauthorizedAdmin
-    // );
+    require!(
+        admin_conf.is_admin(&ctx.accounts.admin.key()),
+        ErrorCode::UnauthorizedAdmin
+    );
     require!(
         ctx.accounts.vault_token_account.amount >= order.token0amount,
         ErrorCode::InsufficientFundsError
