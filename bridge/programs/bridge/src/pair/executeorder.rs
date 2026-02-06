@@ -1,7 +1,5 @@
 use super::ErrorCode;
-use crate::{
-    order::transfer_tokens, AdminConfig, OrderCompleted, OrderExecution, OrderId, StatusOrder,
-};
+use crate::{AdminConfig, OrderCompleted, OrderExecution, OrderId, StatusOrder};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
@@ -58,7 +56,7 @@ pub fn execute_order(
 ) -> Result<()> {
     let _order = &mut ctx.accounts.order_execution;
     let _order_id = &mut ctx.accounts.order_id;
-
+    let admin_conf = &ctx.accounts.admin_config;
     require!(_token0amount > 0, ErrorCode::ZeroAmountError);
     require!(_token1amount > 0, ErrorCode::ZeroAmountError);
     require!(_token0.len() == 42, ErrorCode::AddressLengthError);
@@ -66,6 +64,10 @@ pub fn execute_order(
     require!(
         ctx.accounts.vault_token_program.amount >= _order.token1amount,
         ErrorCode::InsufficientFundsError
+    );
+    require!(
+        admin_conf.is_admin(&ctx.accounts.admin.key()),
+        ErrorCode::UnauthorizedAdmin
     );
     if _order_id.counter == 0 {
         _order_id.counter = 1;
