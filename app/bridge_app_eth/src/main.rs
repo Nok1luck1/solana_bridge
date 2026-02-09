@@ -1,14 +1,15 @@
 pub mod eth;
-pub mod solana;
 use std::error::Error;
 use std::str::FromStr;
-
+use dotenv::dotenv;
+use std::env;
 use alloy::{primitives::Address, providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
 use crate::eth::latest_block;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    dotenv().ok();
     tracing_subscriber::fmt::init();
     let provider_end_point = std::env::var("PROVIDER_BNB_ENDPOINT").expect("PROVIDER DID NOT SET");
     let private_key = std::env::var("PRIVATE_KEY_BNB").expect("private missing");
@@ -23,6 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let token_address = Address::from_str(token_addr.as_str());
     let result1 = eth::allowance_checker::check_balance(token_address.unwrap(), &provider);
     let latest_block = eth::latest_block(&provider);
-
+    println!("{}token addr",token_address.unwrap());
+    println!("Latest block: {}",latest_block.await.unwrap());
     Ok(())
 }
