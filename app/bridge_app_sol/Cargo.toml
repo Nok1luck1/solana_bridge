@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bridge = { path = "../../bridge/programs/bridge" }
 dotenv = "0.15.0"
 anchor-client = { version = "0.32.1", features = ["async"] }
 anchor-lang = "0.32.1"
