@@ -1,3 +1,6 @@
+pub mod sender;
+pub mod utils;
+
 use std::rc::Rc;
 
 use anchor_client::{
@@ -23,8 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:?},admin config admins", admin_config.admins);
     println!("{:?},admin config settet", admin_config.settet);
     println!("{:?},admin config bump", admin_config.bump);
-
-    //let initializa_acc:AdminConfig = program.account()
-    //print!("{}", program.);
+    let check = utils::get_order_id(&program);
+    println!("{:?},{:?}", check.bump, check.counter);
     Ok(())
 }
