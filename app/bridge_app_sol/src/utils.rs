@@ -18,6 +18,10 @@ pub async fn get_current_order_id(
     let (order_id_pda, _) = Pubkey::find_program_address(&[b"order_id"], &bridge::ID);
     println!("{:?}", order_id_pda);
     let order_id_account: bridge::OrderId = program.account(order_id_pda).await?;
+    println!(
+        "{:?},{:?},order counter and bump",
+        order_id_account.counter, order_id_account.bump
+    );
     Ok((order_id_pda, order_id_account))
 }
 pub async fn get_admin_config(
@@ -26,6 +30,10 @@ pub async fn get_admin_config(
     let (admin_config_pda, _) = Pubkey::find_program_address(&[b"adminconfig"], &bridge::ID);
     println!("{:?}", admin_config_pda);
     let admin_config_account: bridge::AdminConfig = program.account(admin_config_pda).await?;
+    println!(
+        "{:?},{:?},admins and setttet",
+        admin_config_account.admins, admin_config_account.settet
+    );
     Ok((admin_config_pda, admin_config_account))
 }
 pub async fn get_specific_order(
