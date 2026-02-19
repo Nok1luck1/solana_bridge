@@ -18,3 +18,6 @@ pub use cancelorder::*;
 
 pub mod admin;
 pub use admin::*;
+
+pub mod execute_sol_order;
+pub use execute_sol_order::*;

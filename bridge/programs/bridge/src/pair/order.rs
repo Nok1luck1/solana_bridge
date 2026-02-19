@@ -50,6 +50,7 @@ pub struct OrderId {
     pub counter: u64,
     pub bump: u8,
 }
+pub const WSOL_MINT: Pubkey = pubkey!("So11111111111111111111111111111111111111112");
 pub fn transfer_tokens<'info>(
     from: &InterfaceAccount<'info, TokenAccount>,
     to: &InterfaceAccount<'info, TokenAccount>,
