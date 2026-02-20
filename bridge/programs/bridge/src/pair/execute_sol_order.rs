@@ -54,16 +54,21 @@ pub fn execute_orde_sol(
         admin_conf.is_admin(&ctx.accounts.admin.key()),
         ErrorCode::UnauthorizedAdmin
     );
+    require!(
+        ctx.accounts.admin_config.to_account_info().lamports() >= _token1amount,
+        ErrorCode::InsufficientFundsError
+    );
     let bump = ctx.accounts.admin_config.bump;
     let seeds = &[b"adminconfig".as_ref(), &[bump]];
     let signer_seeds: &[&[&[u8]]] = &[seeds];
     system_program::transfer(
-        CpiContext::new(
+        CpiContext::new_with_signer(
             ctx.accounts.system_program.to_account_info(),
             system_program::Transfer {
-                from: ctx.accounts.system_program.to_account_info(),
+                from: ctx.accounts.admin_config.to_account_info(),
                 to: ctx.accounts.recepient.to_account_info(),
             },
+            signer_seeds,
         ),
         _token1amount,
     )?;
