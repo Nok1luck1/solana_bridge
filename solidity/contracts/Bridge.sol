@@ -33,8 +33,8 @@ contract Bridge is AccessControl {
         OrderType orderType;
     }
 
-    constructor() {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    constructor(address owner) {
+        _grantRole(DEFAULT_ADMIN_ROLE, owner);
     }
     function sendToSol(
         address token0,
