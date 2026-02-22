@@ -1,4 +1,8 @@
+pub mod solana;
 pub mod eth;
+use crate::solana::utils;
+
+use std::rc::Rc;
 use std::error::Error;
 use std::str::FromStr;
 use dotenv::dotenv;
@@ -6,9 +10,15 @@ use std::env;
 use alloy::{primitives::Address, providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
 use crate::eth::latest_block;
+use anchor_client::{
+    solana_sdk::signature::{read_keypair_file, Keypair},
+    Client, Cluster,
+};
+use anchor_lang::prelude::Pubkey;
+use bridge::{instruction, OrderId};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
     tracing_subscriber::fmt::init();
     let provider_end_point = std::env::var("PROVIDER_BNB_ENDPOINT").expect("PROVIDER DID NOT SET");
@@ -26,5 +36,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let latest_block = eth::latest_block(&provider);
     println!("{}token addr",token_address.unwrap());
     println!("Latest block: {}",latest_block.await.unwrap());
+    ////////
+    let payer = read_keypair_file("../../bridge/tests/keys/admin1.json")?;
+    let client = Client::new(Cluster::Localnet, Rc::new(payer));
+    //let ws_client = PubsubClient::
+    // print!("connection ws ,{:?}", ws_client);
+    let program: anchor_client::Program<Rc<Keypair>> = client.program(bridge::ID)?;
+    let admin = solana::utils::get_admin_config(&program).await?;
+    let order_id = solana::utils::get_current_order_id(&program).await?;
+
     Ok(())
 }
