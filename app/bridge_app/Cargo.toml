@@ -21,3 +21,9 @@ sea-orm = { version = "0.12", features = [
     "macros",
     "debug-print"
 ]}
+solana-client = "3.1.9"
+base64 = "0.22.1"
+futures = "0.3.32"
+solana-sdk = "4.0.1"
+solana-rpc = "3.1.9"
+

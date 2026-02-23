@@ -4,8 +4,7 @@
     "rust-analyzer.checkOnSave.command": "clippy",
     "rust-analyzer.checkOnSave": false,
      "rust-analyzer.linkedProjects": [
-    "app/bridge_app_sol/Cargo.toml",
-    "app/bridge_app_eth/Cargo.toml",
+    "app/bridge_app/Cargo.toml",
     "bridge/programs/bridge/Cargo.toml"
   ]
   

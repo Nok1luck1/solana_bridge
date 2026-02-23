@@ -1,0 +1,10 @@
+{
+  "libpath": "/home/nick/solana/yellowstone-grpc/target/release/libyellowstone_grpc_geyser.so",
+  "log": {
+    "level": "info"
+  },
+  "grpc": {
+    "address": "0.0.0.0:10000",
+    "tls_config": null
+  }
+}
