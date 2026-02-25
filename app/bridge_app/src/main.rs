@@ -3,7 +3,14 @@ pub mod solana;
 use crate::solana::utils;
 
 use crate::eth::latest_block;
-use alloy::{primitives::Address, providers::ProviderBuilder, signers::local::PrivateKeySigner};
+use alloy::{
+    primitives::{
+        map::foldhash::{HashMap, HashMapExt},
+        Address,
+    },
+    providers::ProviderBuilder,
+    signers::local::PrivateKeySigner,
+};
 use anchor_client::{
     solana_sdk::signature::{read_keypair_file, Keypair, Signature},
     Client, Cluster,
@@ -11,11 +18,17 @@ use anchor_client::{
 use anchor_lang::prelude::Pubkey;
 use bridge::{instruction, OrderId};
 use dotenv::dotenv;
-use std::env;
+use futures::{SinkExt, StreamExt};
+use std::collections::HashMap;
 use std::error::Error;
 use std::rc::Rc;
 use std::str::FromStr;
-
+use std::{collections::HashMap, env};
+use yellowstone_grpc_client::{ClientTlsConfig, GeyserGrpcClient};
+use yellowstone_grpc_proto::geyser::{
+    subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
+    SubscribeRequestFilterTransactions,
+};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
@@ -40,5 +53,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let program: anchor_client::Program<Rc<Keypair>> = client.program(bridge::ID)?;
     let admin = solana::utils::get_admin_config(&program).await?;
     let order_id = solana::utils::get_current_order_id(&program).await?;
+    let grpc_client = GeyserGrpcClient::build_from_static("http://127.0.0.1:10000")
+        .connect()
+        .await?;
+
     Ok(())
 }
