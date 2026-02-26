@@ -3,14 +3,14 @@ pub mod solana;
 use crate::solana::utils;
 
 use crate::eth::latest_block;
-use alloy::{
-    primitives::{
-        map::foldhash::{HashMap, HashMapExt},
-        Address,
-    },
-    providers::ProviderBuilder,
-    signers::local::PrivateKeySigner,
-};
+// use alloy::{
+//     primitives::{
+//         map::foldhash::{HashMap, HashMapExt},
+//         Address,
+//     },
+//     providers::ProviderBuilder,
+//     signers::local::PrivateKeySigner,
+// };
 use anchor_client::{
     solana_sdk::signature::{read_keypair_file, Keypair, Signature},
     Client, Cluster,
@@ -19,7 +19,6 @@ use anchor_lang::prelude::Pubkey;
 use bridge::{instruction, OrderId};
 use dotenv::dotenv;
 use futures::{SinkExt, StreamExt};
-use std::collections::HashMap;
 use std::error::Error;
 use std::rc::Rc;
 use std::str::FromStr;
@@ -48,14 +47,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // let latest_block = eth::latest_block(&provider);
     // println!("{}token addr",token_address.unwrap());
     // println!("Latest block: {}",latest_block.await.unwrap());
-    let payer = read_keypair_file("../../bridge/tests/keys/admin1.json")?;
-    let client = Client::new(Cluster::Localnet, Rc::new(payer));
-    let program: anchor_client::Program<Rc<Keypair>> = client.program(bridge::ID)?;
-    let admin = solana::utils::get_admin_config(&program).await?;
-    let order_id = solana::utils::get_current_order_id(&program).await?;
-    let grpc_client = GeyserGrpcClient::build_from_static("http://127.0.0.1:10000")
-        .connect()
-        .await?;
-
+    let _payer = read_keypair_file("../../bridge/tests/keys/admin1.json")?;
+    let _client = Client::new(Cluster::Localnet, Rc::new(_payer));
+    let _program: anchor_client::Program<Rc<Keypair>> = _client.program(bridge::ID)?;
+    let _admin = solana::utils::get_admin_config(&_program).await?;
+    let _order_id = solana::utils::get_current_order_id(&_program).await?;
+    let _check = solana::scanner::checking();
+    print!("{:?}", _check.await?);
     Ok(())
 }

@@ -1618,6 +1618,7 @@ dependencies = [
  "dotenv",
  "env",
  "futures",
+ "hex",
  "sea-orm",
  "tokio",
  "tracing",
