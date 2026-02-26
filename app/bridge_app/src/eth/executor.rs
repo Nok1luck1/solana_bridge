@@ -1,15 +1,15 @@
 use alloy::{
     primitives::{Address, U256},
     providers::{
-        Identity, RootProvider,
         fillers::{BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller},
+        Identity, RootProvider,
     },
 };
 use std::error::Error;
 use std::str::FromStr;
 use tracing::error;
 
-use crate::eth::{Bridge, check_balance};
+use crate::eth::{check_balance, Bridge};
 
 pub async fn distribute_reward(
     address_receiver: Address,
@@ -54,7 +54,7 @@ pub async fn distribute_reward(
         U256::from(amount_deposited),
         U256::from(amount_to_distribute),
     );
-    let distribute_tx = disctribute_token.send().await?;
+    let _distribute_tx = disctribute_token.send().await?;
     //let receipt = &disctribute_tx.get_receipt().await?;
     Ok(())
 }

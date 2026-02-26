@@ -2,7 +2,7 @@ pub mod eth;
 pub mod solana;
 use crate::solana::utils;
 
-use crate::eth::latest_block;
+//use crate::eth::latest_block;
 // use alloy::{
 //     primitives::{
 //         map::foldhash::{HashMap, HashMapExt},
@@ -12,22 +12,21 @@ use crate::eth::latest_block;
 //     signers::local::PrivateKeySigner,
 // };
 use anchor_client::{
-    solana_sdk::signature::{read_keypair_file, Keypair, Signature},
+    solana_sdk::signature::{read_keypair_file, Keypair},
     Client, Cluster,
 };
-use anchor_lang::prelude::Pubkey;
-use bridge::{instruction, OrderId};
+
 use dotenv::dotenv;
-use futures::{SinkExt, StreamExt};
-use std::error::Error;
+// use futures::{SinkExt, StreamExt};
+// use std::error::Error;
 use std::rc::Rc;
-use std::str::FromStr;
-use std::{collections::HashMap, env};
-use yellowstone_grpc_client::{ClientTlsConfig, GeyserGrpcClient};
-use yellowstone_grpc_proto::geyser::{
-    subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
-    SubscribeRequestFilterTransactions,
-};
+// use std::str::FromStr;
+// use std::{collections::HashMap, env};
+// use yellowstone_grpc_client::{ClientTlsConfig, GeyserGrpcClient};
+// use yellowstone_grpc_proto::geyser::{
+//     subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
+//     SubscribeRequestFilterTransactions,
+// };
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();

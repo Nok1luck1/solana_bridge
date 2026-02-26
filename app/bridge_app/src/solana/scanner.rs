@@ -1,4 +1,4 @@
-use crate::solana::utils;
+use crate::solana::{decoder, utils};
 use anchor_client::{
     solana_sdk::signature::{read_keypair_file, Keypair},
     Client, Cluster,
@@ -40,7 +40,8 @@ pub async fn checking() -> Result<(), Box<dyn std::error::Error>> {
                             if let Some(msg) = tx.message {
                                 println!("  Accounts: {}", msg.account_keys.len());
                                 for ix in &msg.instructions {
-                                    println!("  Instruction data (hex): {}", hex::encode(&ix.data));
+                                    decoder::decode(&ix.data);
+                                    println!("  Instruction data (hex): {}", hex::encode(&ix.data),);
                                 }
                             }
                         }

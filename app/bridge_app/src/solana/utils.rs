@@ -2,7 +2,6 @@ use anchor_client::{
     solana_sdk::{
         signature::{read_keypair_file, Keypair},
         signer::Signer,
-        system_program,
     },
     Client, Cluster,
 };
@@ -54,7 +53,7 @@ pub async fn get_specific_order(
     Ok((order_pda, order_account))
 }
 pub async fn get_token_vault(
-    program: &anchor_client::Program<Rc<Keypair>>,
+    _program: &anchor_client::Program<Rc<Keypair>>,
     token_mint: Pubkey,
     associated_token_account: Pubkey,
 ) -> Result<Pubkey, anyhow::Error> {

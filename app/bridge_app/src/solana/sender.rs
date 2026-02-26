@@ -3,7 +3,6 @@ use anchor_client::{
     solana_sdk::{
         signature::{read_keypair_file, Keypair},
         signer::Signer,
-        system_program,
     },
     Client, Cluster,
 };
@@ -27,8 +26,8 @@ async fn execute_order(
 ) -> Result<(), anyhow::Error> {
     let timeend = SystemTime::now().elapsed().unwrap().as_secs() as i64;
     let (order_id_pda, order_id) = utils::get_current_order_id(&program).await?;
-    let (admin_config_pda, admin_config) = utils::get_admin_config(&program).await?;
-    let (order_execution, bump_exec) = Pubkey::find_program_address(
+    let (admin_config_pda, _admin_config) = utils::get_admin_config(&program).await?;
+    let (order_execution, _bump_exec) = Pubkey::find_program_address(
         &[
             b"order_execution",
             admin.pubkey().as_array().as_ref(),
@@ -38,7 +37,7 @@ async fn execute_order(
     );
     let user_ata = utils::get_user_ata(token_mint, receiver).await?;
     let vault_ata = utils::get_token_vault(program, token_mint, associated_token_account).await?;
-    let send_transaction = program
+    let _send_transaction = program
         .request()
         .accounts(bridge::accounts::ExecuteOrder {
             order_id: order_id_pda, // PDA order_id

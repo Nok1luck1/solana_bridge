@@ -2,8 +2,8 @@ use crate::eth::ERC20;
 use alloy::{
     primitives::{Address, U256},
     providers::{
-        Identity, Provider, RootProvider,
         fillers::{BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller},
+        Identity, RootProvider,
     },
     signers::k256::elliptic_curve::bigint,
 };
