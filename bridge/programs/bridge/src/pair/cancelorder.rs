@@ -95,6 +95,5 @@ pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {
         amount0: order.token0amount,
         time_cancelled: Clock::get()?.unix_timestamp,
     });
-
     Ok(())
 }

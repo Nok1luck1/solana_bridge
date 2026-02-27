@@ -12,7 +12,7 @@ pub fn decode(data: &[u8]) {
         return;
     }
     let disc = &data[..8];
-    let payload = &data[..8];
+    let payload = &data[8..];
     if disc == bridge::OrderCreated::DISCRIMINATOR {
         if let Ok(decoded) = bridge::OrderCreated::try_from_slice(payload) {
             print!(
@@ -28,32 +28,31 @@ pub fn decode(data: &[u8]) {
         }
         return;
     }
-    if disc == bridge::OrderExecution::DISCRIMINATOR {
-        if let Ok(decoded) = bridge::OrderExecution::try_from_slice(payload) {
+    if disc == bridge::OrderCompleted::DISCRIMINATOR {
+        if let Ok(decoded) = bridge::OrderCompleted::try_from_slice(payload) {
             print!(
-                "decoded msg {:?},{:?},{:?},{:?},{:?},{:?},{:?},{:?},{:?}",
-                decoded.bump,
-                decoded.id,
-                decoded.maker,
+                "decoded msg {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
+                decoded.amount0,
+                decoded.amount1,
                 decoded.receiver,
-                decoded.timeend,
+                decoded.sender,
+                decoded.timeexecuted,
                 decoded.token0,
-                decoded.token0amount,
                 decoded.token1,
-                decoded.token1amount
             );
         }
         return;
     }
-    if disc == bridge::OrderCreated::DISCRIMINATOR {
-        if let Ok(decoded) = bridge::OrderCreated::try_from_slice(payload) {
+    if disc == bridge::OrderCancelled::DISCRIMINATOR {
+        if let Ok(decoded) = bridge::OrderCancelled::try_from_slice(payload) {
             print!(
-                "decoded msg {:?},{:?},{:?},{:?},{:?}",
-                decoded.timecreation,
-                decoded.token0,
-                decoded.token1,
+                "decoded msg {:?},{:?},{:?},{:?},{:?},{:?}",
                 decoded.amount0,
-                decoded.amount1
+                decoded.maker,
+                decoded.order_id,
+                decoded.time_cancelled,
+                decoded.token0,
+                decoded.token1
             );
         }
         return;

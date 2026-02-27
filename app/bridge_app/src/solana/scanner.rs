@@ -3,6 +3,7 @@ use anchor_client::{
     solana_sdk::signature::{read_keypair_file, Keypair},
     Client, Cluster,
 };
+use anchor_lang::AnchorSerialize;
 use futures::{SinkExt, StreamExt};
 use std::rc::Rc;
 use yellowstone_grpc_client::GeyserGrpcClient;
@@ -10,7 +11,6 @@ use yellowstone_grpc_proto::geyser::{
     subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
     SubscribeRequestFilterTransactions, SubscribeRequestPing,
 };
-
 pub async fn checking() -> Result<(), Box<dyn std::error::Error>> {
     let mut grpc_client = GeyserGrpcClient::build_from_static("http://127.0.0.1:10000")
         .connect()
@@ -40,16 +40,22 @@ pub async fn checking() -> Result<(), Box<dyn std::error::Error>> {
                             if let Some(msg) = tx.message {
                                 println!("  Accounts: {}", msg.account_keys.len());
                                 for ix in &msg.instructions {
-                                    decoder::decode(&ix.data);
-                                    println!("  Instruction data (hex): {}", hex::encode(&ix.data),);
+                                    println!("  Instruction data (hex): {}", hex::encode(&ix.data));
                                 }
                             }
                         }
-
                         if let Some(meta) = tx_info.meta {
                             for log in &meta.log_messages {
                                 if log.contains("Program log:") {
-                                    println!("  Log: {}", log);
+                                    println!("  Log: {}", log,);
+                                }
+                                if let Some(data_b64) = log.strip_prefix("Program data: ") {
+                                    match base64::decode(data_b64.trim()) {
+                                        Ok(raw_bytes) => {
+                                            decoder::decode(&raw_bytes);
+                                        }
+                                        Err(e) => println!("  Base64 decode error: {}", e),
+                                    }
                                 }
                             }
                         }
