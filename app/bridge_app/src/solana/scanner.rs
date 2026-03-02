@@ -38,9 +38,9 @@ pub async fn checking() -> Result<(), Box<dyn std::error::Error>> {
 
                         if let Some(tx) = tx_info.transaction {
                             if let Some(msg) = tx.message {
-                                println!("  Accounts: {}", msg.account_keys.len());
+                                println!(" Accounts: {}", msg.account_keys.len());
                                 for ix in &msg.instructions {
-                                    println!("  Instruction data (hex): {}", hex::encode(&ix.data));
+                                    println!("Instruction data (hex): {}", hex::encode(&ix.data));
                                 }
                             }
                         }
@@ -54,7 +54,7 @@ pub async fn checking() -> Result<(), Box<dyn std::error::Error>> {
                                         Ok(raw_bytes) => {
                                             decoder::decode(&raw_bytes);
                                         }
-                                        Err(e) => println!("  Base64 decode error: {}", e),
+                                        Err(e) => println!("Base64 decode error: {}", e),
                                     }
                                 }
                             }

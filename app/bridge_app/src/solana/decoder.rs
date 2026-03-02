@@ -16,7 +16,7 @@ pub fn decode(data: &[u8]) {
     if disc == bridge::OrderCreated::DISCRIMINATOR {
         if let Ok(decoded) = bridge::OrderCreated::try_from_slice(payload) {
             print!(
-                "decoded msg {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
+                "decoded msg Order Created {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
                 decoded.amount0,
                 decoded.amount1,
                 decoded.receiver,
@@ -31,7 +31,7 @@ pub fn decode(data: &[u8]) {
     if disc == bridge::OrderCompleted::DISCRIMINATOR {
         if let Ok(decoded) = bridge::OrderCompleted::try_from_slice(payload) {
             print!(
-                "decoded msg {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
+                "decoded msg Order completed {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
                 decoded.amount0,
                 decoded.amount1,
                 decoded.receiver,
@@ -46,7 +46,7 @@ pub fn decode(data: &[u8]) {
     if disc == bridge::OrderCancelled::DISCRIMINATOR {
         if let Ok(decoded) = bridge::OrderCancelled::try_from_slice(payload) {
             print!(
-                "decoded msg {:?},{:?},{:?},{:?},{:?},{:?}",
+                "decoded msg Order Canceled{:?},{:?},{:?},{:?},{:?},{:?}",
                 decoded.amount0,
                 decoded.maker,
                 decoded.order_id,
