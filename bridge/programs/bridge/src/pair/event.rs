@@ -13,6 +13,7 @@ pub struct OrderCreated {
 
 #[event]
 pub struct OrderCompleted {
+    pub timestarted: i64,
     pub timeexecuted: i64,
     pub token0: String,
     pub token1: Pubkey,
@@ -23,6 +24,7 @@ pub struct OrderCompleted {
 }
 #[event]
 pub struct OrderCancelled {
+    pub timestarted: i64,
     pub order_id: u64,
     pub maker: Pubkey,
     pub token0: Pubkey,

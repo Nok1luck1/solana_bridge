@@ -88,6 +88,7 @@ pub fn cancel_order(ctx: Context<CancelOrder>) -> Result<()> {
 
     order.status = StatusOrder::CANCELED;
     emit!(OrderCancelled {
+        timestarted:order.timestart,
         order_id: order.id,
         maker: order.maker,
         token0: order.token0,

@@ -86,6 +86,7 @@ pub fn execute_orde_sol(
         .checked_add(1)
         .ok_or(ErrorCode::OveflowError)?;
     emit!(OrderCompleted {
+        timestarted: _timestart,
         timeexecuted: _order.timeend,
         token0: _token0,
         token1: _order.token1,

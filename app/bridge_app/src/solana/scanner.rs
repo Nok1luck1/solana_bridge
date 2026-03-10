@@ -1,4 +1,7 @@
-use crate::solana::{decoder, utils};
+use crate::{
+    solana::{decoder, utils, ProgramEvent},
+    types::OrderFormatter,
+};
 use anchor_client::{
     solana_sdk::signature::{read_keypair_file, Keypair},
     Client, Cluster,
@@ -11,7 +14,7 @@ use yellowstone_grpc_proto::geyser::{
     subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
     SubscribeRequestFilterTransactions, SubscribeRequestPing,
 };
-pub async fn checking() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn checking() -> Result<Option<OrderFormatter>, Box<dyn std::error::Error>> {
     let mut grpc_client = GeyserGrpcClient::build_from_static("http://127.0.0.1:10000")
         .connect()
         .await?;
@@ -34,25 +37,30 @@ pub async fn checking() -> Result<(), Box<dyn std::error::Error>> {
                 Some(UpdateOneof::Transaction(tx_update)) => {
                     if let Some(tx_info) = tx_update.transaction {
                         let signature = bs58::encode(&tx_info.signature).into_string();
-                        println!("New transaction: {}", signature);
+                        println!("New transaction in program {}", signature);
 
-                        if let Some(tx) = tx_info.transaction {
-                            if let Some(msg) = tx.message {
-                                println!(" Accounts: {}", msg.account_keys.len());
-                                for ix in &msg.instructions {
-                                    println!("Instruction data (hex): {}", hex::encode(&ix.data));
-                                }
-                            }
-                        }
+                        // if let Some(tx) = tx_info.transaction {
+                        //     if let Some(msg) = tx.message {
+                        //         println!(" Accounts: {}", msg.account_keys.len());
+                        //         for ix in &msg.instructions {
+                        //             println!("Instruction data (hex): {}", hex::encode(&ix.data));
+                        //             print!("tuta22222");
+                        //         }
+                        //         print!("tuta111");
+                        //     }
+                        // }
                         if let Some(meta) = tx_info.meta {
                             for log in &meta.log_messages {
-                                if log.contains("Program log:") {
-                                    println!("  Log: {}", log,);
-                                }
+                                // if log.contains("Program log:") {
+                                //     println!("  Log: {}", log,);
+                                //     print!("tuta3333");
+                                // }
                                 if let Some(data_b64) = log.strip_prefix("Program data: ") {
                                     match base64::decode(data_b64.trim()) {
                                         Ok(raw_bytes) => {
-                                            decoder::decode(&raw_bytes);
+                                            let check = decoder::decode(&raw_bytes);
+                                            // print!("{:?},return decoded object",check);
+                                            return Ok(check);
                                         }
                                         Err(e) => println!("Base64 decode error: {}", e),
                                     }
@@ -78,7 +86,7 @@ pub async fn checking() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    Ok(())
+    Ok(None)
 }
 
 fn make_transactions_filter(

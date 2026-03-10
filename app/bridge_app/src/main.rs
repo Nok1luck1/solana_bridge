@@ -1,5 +1,6 @@
 pub mod eth;
 pub mod solana;
+pub mod types;
 use crate::solana::utils;
 
 //use crate::eth::latest_block;
@@ -15,18 +16,9 @@ use anchor_client::{
     solana_sdk::signature::{read_keypair_file, Keypair},
     Client, Cluster,
 };
-
 use dotenv::dotenv;
-// use futures::{SinkExt, StreamExt};
-// use std::error::Error;
 use std::rc::Rc;
-// use std::str::FromStr;
-// use std::{collections::HashMap, env};
-// use yellowstone_grpc_client::{ClientTlsConfig, GeyserGrpcClient};
-// use yellowstone_grpc_proto::geyser::{
-//     subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
-//     SubscribeRequestFilterTransactions,
-// };
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
@@ -38,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     .wallet(signer)
     //     .connect_ws(provider_end_point.as_str())
     //     .await
-    //     .expect("Failed to connect to BSC");
+    //     .expect("Failed to connect to EVM");
 
     // let token_addr = std::env::var("TOKEN_ADDRESS").expect("Contract addr must be set in .env");
     // let token_address = Address::from_str(token_addr.as_str());
@@ -52,6 +44,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _admin = solana::utils::get_admin_config(&_program).await?;
     let _order_id = solana::utils::get_current_order_id(&_program).await?;
     let _check = solana::scanner::checking();
-    print!("{:?}", _check.await?);
+    _check
+        .await
+        .unwrap()
+        .inspect(|x| println!("got: {x:?}"))
+        .expect("list should be long enough");
+
     Ok(())
 }

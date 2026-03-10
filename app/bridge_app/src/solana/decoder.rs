@@ -3,58 +3,91 @@ use anchor_lang::AccountDeserialize;
 use anchor_lang::AnchorDeserialize;
 use anchor_lang::Discriminator;
 use anchor_lang::InstructionData;
-use bridge::OrderExecution;
 
-use crate::eth::Bridge::OrderCreated;
+use crate::types::OrderFormatter;
 
-pub fn decode(data: &[u8]) {
+pub enum ProgramEvent {
+    OrderCancelled(bridge::OrderCancelled),
+    OrderCompleted(bridge::OrderCompleted),
+    OrderCreated(bridge::OrderCreated),
+}
+
+pub fn decode(data: &[u8]) -> Option<OrderFormatter> {
     if data.len() < 8 {
-        return;
+        return None;
     }
     let disc = &data[..8];
     let payload = &data[8..];
     if disc == bridge::OrderCreated::DISCRIMINATOR {
-        if let Ok(decoded) = bridge::OrderCreated::try_from_slice(payload) {
-            print!(
-                "decoded msg Order Created {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
-                decoded.amount0,
-                decoded.amount1,
-                decoded.receiver,
-                decoded.sender,
-                decoded.timecreation,
-                decoded.token0,
-                decoded.token1
-            );
-        }
-        return;
+        let decoded = bridge::OrderCreated::try_from_slice(payload).unwrap();
+        print!(
+            "Decoded msg Order Created {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
+            decoded.amount0,
+            decoded.amount1,
+            decoded.receiver,
+            decoded.sender,
+            decoded.timecreation,
+            decoded.token0,
+            decoded.token1
+        );
+        let order = OrderFormatter::new(
+            decoded.timecreation,
+            0,
+            decoded.token1,
+            decoded.token0,
+            decoded.amount0,
+            decoded.amount1,
+            decoded.receiver,
+            decoded.sender,
+        );
+        return Some(order);
     }
     if disc == bridge::OrderCompleted::DISCRIMINATOR {
-        if let Ok(decoded) = bridge::OrderCompleted::try_from_slice(payload) {
-            print!(
-                "decoded msg Order completed {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
-                decoded.amount0,
-                decoded.amount1,
-                decoded.receiver,
-                decoded.sender,
-                decoded.timeexecuted,
-                decoded.token0,
-                decoded.token1,
-            );
-        }
-        return;
+        let decoded = bridge::OrderCompleted::try_from_slice(payload).unwrap();
+        print!(
+            "Decoded msg Order Completed {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
+            decoded.amount0,
+            decoded.amount1,
+            decoded.receiver,
+            decoded.sender,
+            decoded.timeexecuted,
+            decoded.token0,
+            decoded.token1,
+        );
+        let order = OrderFormatter::new(
+            decoded.timestarted,
+            decoded.timeexecuted,
+            decoded.token0,
+            decoded.token1,
+            decoded.amount0,
+            decoded.amount1,
+            decoded.sender,
+            decoded.receiver,
+        );
+        return Some(order);
     }
     if disc == bridge::OrderCancelled::DISCRIMINATOR {
-        if let Ok(decoded) = bridge::OrderCancelled::try_from_slice(payload) {
-            print!(
-                "decoded msg Order Canceled{:?},{:?},{:?},{:?},{:?},{:?}",
-                decoded.amount0,
-                decoded.maker,
-                decoded.order_id,
-                decoded.time_cancelled,
-                decoded.token0,
-                decoded.token1
-            );
-        }
-        return;
+        let decoded = bridge::OrderCancelled::try_from_slice(payload).unwrap();
+        print!(
+            "Decoded msg Order Canceled{:?},{:?},{:?},{:?},{:?},{:?}",
+            decoded.amount0,
+            decoded.maker,
+            decoded.order_id,
+            decoded.time_cancelled,
+            decoded.token0,
+            decoded.token1
+        );
+        let order = OrderFormatter::new(
+            decoded.timestarted,
+            decoded.time_cancelled,
+            decoded.token1,
+            decoded.token0,
+            decoded.amount0,
+            0,
+            String::new(),
+            decoded.maker,
+        );
+        return Some(order);
     }
+    return None;
 }
