@@ -109,13 +109,6 @@ describe("bridge", () => {
         admin3.publicKey,
         2 * LAMPORTS_PER_SOL,
       );
-      const latestBlockhash = await provider.connection.getLatestBlockhash();
-
-      await provider.connection.confirmTransaction({
-        signature: airdropSig3,
-        blockhash: latestBlockhash.blockhash,
-        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-      });
 
       try {
         const adminConfigAccount = await program.account.adminConfig.fetch(

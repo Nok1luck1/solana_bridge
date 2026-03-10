@@ -1,2 +1,6 @@
 /target
+<<<<<<< HEAD
 /.env
+=======
+.env
+>>>>>>> origin/master
