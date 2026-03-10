@@ -16,7 +16,6 @@ contract Bridge is AccessControl {
         Completed,
         Canceled
     }
-    address public owner;
     mapping(bytes32 => Order) public orderByIndex;
     event OrderCreated(bytes32 orderId);
     event OrderExecuted(bytes32 orderId);
@@ -32,7 +31,6 @@ contract Bridge is AccessControl {
         StatusOrder orderStatus;
         OrderType orderType;
     }
-
     constructor(address owner) {
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
     }

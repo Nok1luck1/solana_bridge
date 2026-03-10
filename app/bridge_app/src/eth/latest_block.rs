@@ -1,12 +1,5 @@
-use crate::eth::Bridge;
-use alloy::{
-    primitives::{Address, U256},
-    providers::{
-        Identity, Provider, RootProvider,
-        fillers::{BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller},
-    },
-};
-use std::{env::current_exe, error::Error, str::FromStr};
+use alloy::providers::{fillers::JoinFill, Provider};
+use std::error::Error;
 
 pub async fn latest_block(
     provider: &alloy::providers::fillers::FillProvider<

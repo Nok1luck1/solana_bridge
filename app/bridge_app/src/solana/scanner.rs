@@ -1,14 +1,6 @@
-use crate::{
-    solana::{decoder, utils, ProgramEvent},
-    types::OrderFormatter,
-};
-use anchor_client::{
-    solana_sdk::signature::{read_keypair_file, Keypair},
-    Client, Cluster,
-};
-use anchor_lang::AnchorSerialize;
+use crate::{solana::decoder, types::OrderFormatter};
+
 use futures::{SinkExt, StreamExt};
-use std::rc::Rc;
 use yellowstone_grpc_client::GeyserGrpcClient;
 use yellowstone_grpc_proto::geyser::{
     subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,

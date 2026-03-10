@@ -2,7 +2,6 @@ use anchor_lang::prelude::Pubkey;
 use std::fmt;
 use std::fmt::Display;
 
-use crate::solana::sender;
 #[derive(Debug)]
 pub struct OrderFormatter {
     pub time_started: i64,

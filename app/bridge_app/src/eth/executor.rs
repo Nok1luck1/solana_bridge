@@ -1,10 +1,4 @@
-use alloy::{
-    primitives::{Address, U256},
-    providers::{
-        fillers::{BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller},
-        Identity, RootProvider,
-    },
-};
+use alloy::primitives::{Address, U256};
 use std::error::Error;
 use std::str::FromStr;
 use tracing::error;

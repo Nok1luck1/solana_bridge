@@ -6,13 +6,13 @@ async function main() {
     const [deployer] = await ethers.getSigners();
 
     const Bridge = await ethers.getContractFactory("Bridge");
-    const Token = await ethers.getContractFactory("Token");
-    const Factory = await Bridge.deploy(deployer.address);
-    await Factory.deployed()
-    console.log(Factory.address)
-    const Router = await Token.deploy(deployer.address);
-    await Router.deployed()
-    console.log(Router.address)
+    const Tokencontr = await ethers.getContractFactory("Token");
+    const BridgeContract = await Bridge.deploy(deployer.address);
+    await BridgeContract.deployed()
+    console.log(BridgeContract.address,"bridge contract")
+    const Token = await Tokencontr.deploy(deployer.address);
+    await Token.deployed()
+    console.log(Token.address,"token Contractr")
 
 }
 

@@ -1,13 +1,9 @@
 use crate::eth::ERC20;
-use alloy::{
-    primitives::{Address, U256},
-    providers::{
-        fillers::{BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller},
-        Identity, RootProvider,
-    },
-    signers::k256::elliptic_curve::bigint,
-};
-use std::{error::Error, str::FromStr};
+use alloy::primitives::{Address, U256};
+use alloy::providers::fillers::JoinFill;
+use std::error::Error;
+
+use std::str::FromStr;
 
 pub async fn check_balance(
     token_addr: Address,

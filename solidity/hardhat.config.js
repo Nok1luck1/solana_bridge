@@ -16,7 +16,7 @@ module.exports = {
       chainId: 97, //Binance Smart Chain Testnet
     },
     localhost: {
-      url: 'HTTP://127.0.0.1:7545',
+      url: 'HTTP://127.0.0.1:8545',
     },
 
   },

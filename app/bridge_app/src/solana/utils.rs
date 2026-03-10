@@ -1,14 +1,8 @@
-use anchor_client::{
-    solana_sdk::{
-        signature::{read_keypair_file, Keypair},
-        signer::Signer,
-    },
-    Client, Cluster,
-};
+use anchor_client::solana_sdk::signature::Keypair;
 use anchor_lang::prelude::Pubkey;
 use anchor_spl::associated_token::{self, get_associated_token_address};
 use anyhow::Ok;
-use bridge::{instruction, order, AdminConfig, Order, OrderId};
+use bridge::{AdminConfig, OrderId};
 use std::rc::Rc;
 
 pub async fn get_current_order_id(
