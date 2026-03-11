@@ -13,7 +13,7 @@ async function main() {
     const Token = await Tokencontr.deploy(deployer.address);
     await Token.deployed()
     console.log(Token.address,"token Contractr")
-
+    const mint = await Token.mint(BridgeContract.address,"10000000000000000000000000")
 }
 
 main()

@@ -26,28 +26,30 @@ contract Bridge is AccessControl {
         uint amount0;
         uint amount1;
         uint timestamp;
-        string userSol;
+        string receiver;
         string token1;
         StatusOrder orderStatus;
         OrderType orderType;
     }
+
     constructor(address owner) {
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
     }
-    function sendToSol(
+
+    function order_for_transfer(
         address token0,
-        uint amountGive,
-        uint amountExpected,
+        uint amount0,
+        uint amount1,
         string memory solAddress,
         string memory solMintAcc
     ) public {
         Order memory order = Order({
             user: msg.sender,
             token0: token0,
-            amount0: amountGive,
-            amount1: amountExpected,
+            amount0: amount0,
+            amount1: amount1,
             timestamp: block.timestamp,
-            userSol: solAddress,
+            receiver: solAddress,
             token1: solMintAcc,
             orderStatus: StatusOrder.Initialized,
             orderType: OrderType.FromEVMtoSol
@@ -60,11 +62,12 @@ contract Bridge is AccessControl {
                 order.token1
             )
         );
-        IERC20(token0).transfer(address(this), amountGive);
+        IERC20(token0).transfer(address(this), amount0);
         orderByIndex[orderId] = order;
         emit OrderCreated(orderId);
     }
-    function distributeReward(
+
+    function order_for_execution(
         address receiver,
         string memory _token0,
         address token1,
@@ -83,7 +86,7 @@ contract Bridge is AccessControl {
             amount0: amount0,
             amount1: amount1,
             timestamp: block.timestamp,
-            userSol: sender,
+            receiver: sender,
             token1: _token0,
             orderStatus: StatusOrder.Initialized,
             orderType: OrderType.FromEVMtoSol
@@ -100,6 +103,7 @@ contract Bridge is AccessControl {
         orderByIndex[orderId] = order;
         emit OrderExecuted(orderId);
     }
+
     function getOrderInfo(bytes32 orderID) public view returns (Order memory) {
         return orderByIndex[orderID];
     }

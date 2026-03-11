@@ -21,7 +21,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let _token_addr = std::env::var("TOKEN_ADDRESS").expect("Contract addr must be set in .env");
     let _token_address = Address::from_str(_token_addr.as_str());
-    let _result1 = eth::allowance_checker::check_balance(_token_address.unwrap(), &provider);
+    let _result1 = eth::utils::check_balance(_token_address.unwrap(), &provider);
+    let _check = eth::scan_for_orders().await;
     // let _latest_block = eth::latest_block(&provider);
     // println!("Latest block: {}", &_latest_block.await?);
     // let _events = eth::scan_for_orders(0, _latest_block.await?, &provider);
