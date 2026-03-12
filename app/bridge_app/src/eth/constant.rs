@@ -32,6 +32,7 @@ sol! {
         OrderType orderType;
     }
         event OrderCreated(bytes32 orderId);
+        event OrderExecuted(bytes32 orderId);
         function balanceOf(address owner) public view returns (uint256);
         function allowance(address owner,address spender) public view returns(uint256);
         function getOrderInfo(bytes32 orderID) public view returns(Order memory);

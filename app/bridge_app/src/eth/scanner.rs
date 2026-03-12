@@ -1,13 +1,17 @@
+use crate::eth::{self, utils};
+use alloy::primitives::FixedBytes;
+use alloy::sol_types::SolEvent;
 use alloy::{
     eips::BlockNumberOrTag,
     primitives::{address, Address},
     providers::{Provider, ProviderBuilder, WsConnect},
     rpc::types::Filter,
 };
+use bridge::order;
 use futures::StreamExt;
 use std::{error::Error, str::FromStr};
 
-pub async fn scan_for_orders() -> Result<(), Box<dyn Error>> {
+pub async fn scan_for_orders() -> Result<Option<FixedBytes<32>>, Box<dyn Error>> {
     let rpc_url = std::env::var("WEBSOCKET_EVM").expect("WS url missing");
     let ws_connect = WsConnect::new(rpc_url);
     let provider = ProviderBuilder::new().connect_ws(ws_connect).await?;
@@ -21,8 +25,21 @@ pub async fn scan_for_orders() -> Result<(), Box<dyn Error>> {
     let mut stream = sub.into_stream();
     while let Some(log) = stream.next().await {
         println!("Geting some orders {log:?}");
-        print!(" topics", log.topics());
-        //let getInfo =
+
+        match eth::constant::Bridge::OrderCreated::decode_raw_log(
+            log.topics().into_iter(),
+            &log.data().data,
+        ) {
+            Ok(decoded) => {
+                let order_id: alloy::primitives::FixedBytes<32> = decoded.orderId;
+                println!("Decoded OrderCreated:");
+                println!("order_id: 0x{}", hex::encode(order_id));
+                return Ok(Some(order_id));
+            }
+            Err(e) => {
+                println!("Decode failed: {e}");
+            }
+        }
     }
-    Ok(())
+    Ok(None)
 }

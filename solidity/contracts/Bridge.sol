@@ -42,7 +42,7 @@ contract Bridge is AccessControl {
         uint amount1,
         string memory solAddress,
         string memory solMintAcc
-    ) public {
+    ) public returns(bytes32 orderId){
         Order memory order = Order({
             user: msg.sender,
             token0: token0,
@@ -54,7 +54,7 @@ contract Bridge is AccessControl {
             orderStatus: StatusOrder.Initialized,
             orderType: OrderType.FromEVMtoSol
         });
-        bytes32 orderId = keccak256(
+        orderId = keccak256(
             abi.encodePacked(
                 order.user,
                 order.timestamp,

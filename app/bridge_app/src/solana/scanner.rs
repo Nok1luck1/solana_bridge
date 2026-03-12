@@ -30,28 +30,12 @@ pub async fn checking() -> Result<Option<OrderFormatter>, Box<dyn std::error::Er
                     if let Some(tx_info) = tx_update.transaction {
                         let signature = bs58::encode(&tx_info.signature).into_string();
                         println!("New transaction in program {}", signature);
-
-                        // if let Some(tx) = tx_info.transaction {
-                        //     if let Some(msg) = tx.message {
-                        //         println!(" Accounts: {}", msg.account_keys.len());
-                        //         for ix in &msg.instructions {
-                        //             println!("Instruction data (hex): {}", hex::encode(&ix.data));
-                        //             print!("tuta22222");
-                        //         }
-                        //         print!("tuta111");
-                        //     }
-                        // }
                         if let Some(meta) = tx_info.meta {
                             for log in &meta.log_messages {
-                                // if log.contains("Program log:") {
-                                //     println!("  Log: {}", log,);
-                                //     print!("tuta3333");
-                                // }
                                 if let Some(data_b64) = log.strip_prefix("Program data: ") {
                                     match base64::decode(data_b64.trim()) {
                                         Ok(raw_bytes) => {
                                             let check = decoder::decode(&raw_bytes);
-                                            // print!("{:?},return decoded object",check);
                                             return Ok(check);
                                         }
                                         Err(e) => println!("Base64 decode error: {}", e),

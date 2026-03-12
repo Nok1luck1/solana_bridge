@@ -4,8 +4,8 @@ const { BigNumber, constants, utils } = require("ethers");
 
 async function main() {
     const [deployer] = await ethers.getSigners();
-    const bridgeAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
-    const tokenAddress = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707";
+    const bridgeAddress = "0x0B306BF915C4d645ff596e518fAf3F9669b97016";
+    const tokenAddress = "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1";
     const amount0 = "10000000000000";
     const amount1 = "10000000000000";
     const solreceiver = "8nkxdKGDpJYTvrS2UoQh4QrGS3FLmHRCdhWtriGcFFB";
@@ -16,6 +16,7 @@ async function main() {
     await approve.wait();
     const orderCreation = await Bridge.order_for_transfer(Tokencontr.address,amount0,amount1,solreceiver,tokenmintsol)
     console.log(orderCreation,"order creation");
+    const checkOrder = await Bridge.getOrderInfo(orderCreation)
 }
 
 main()
