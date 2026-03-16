@@ -21,7 +21,7 @@ sol! {
         Canceled
     }
     struct Order {
-        address user;
+        address maker;
         address token0;
         uint amount0;
         uint amount1;

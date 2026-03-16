@@ -21,7 +21,7 @@ contract Bridge is AccessControl {
     event OrderExecuted(bytes32 orderId);
 
     struct Order {
-        address user;
+        address maker;
         address token0;
         uint amount0;
         uint amount1;
@@ -44,7 +44,7 @@ contract Bridge is AccessControl {
         string memory solMintAcc
     ) public returns(bytes32 orderId){
         Order memory order = Order({
-            user: msg.sender,
+            maker: msg.sender,
             token0: token0,
             amount0: amount0,
             amount1: amount1,
@@ -56,7 +56,7 @@ contract Bridge is AccessControl {
         });
         orderId = keccak256(
             abi.encodePacked(
-                order.user,
+                order.maker,
                 order.timestamp,
                 order.token0,
                 order.token1
@@ -81,7 +81,7 @@ contract Bridge is AccessControl {
             "Inssuficient amount to distribute reward"
         );
         Order memory order = Order({
-            user: msg.sender,
+            maker: msg.sender,
             token0: token1,
             amount0: amount0,
             amount1: amount1,
@@ -93,7 +93,7 @@ contract Bridge is AccessControl {
         });
         orderId = keccak256(
             abi.encodePacked(
-                order.user,
+                order.maker,
                 order.timestamp,
                 order.token0,
                 order.token1
