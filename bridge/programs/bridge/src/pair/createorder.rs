@@ -91,6 +91,7 @@ pub fn create_order(
         &ctx.accounts.token_program,
     )?;
     emit!(OrderCreated {
+        id: order.id,
         timecreation: order.timestart,
         token0: order.token0,
         token1: order.token1.clone(),

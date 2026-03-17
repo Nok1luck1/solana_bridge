@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 #[event]
 pub struct OrderCreated {
+    pub id: u64,
     pub timecreation: i64,
     pub token0: Pubkey,
     pub token1: String,
@@ -13,6 +14,7 @@ pub struct OrderCreated {
 
 #[event]
 pub struct OrderCompleted {
+    pub id: u64,
     pub timestarted: i64,
     pub timeexecuted: i64,
     pub token0: String,
