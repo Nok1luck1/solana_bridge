@@ -12,7 +12,6 @@ use sea_orm::{prelude::Decimal, ActiveModelTrait, Database, DatabaseConnection, 
 use std::str::FromStr;
 use tokio::sync::OnceCell;
 
-static DB: OnceCell<DatabaseConnection> = OnceCell::const_new();
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
