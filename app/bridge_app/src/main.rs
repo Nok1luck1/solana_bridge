@@ -4,19 +4,13 @@ pub mod eth;
 pub mod solana;
 pub mod types;
 use crate::solana::utils;
-use alloy::{primitives::Address, providers::ProviderBuilder, signers::local::PrivateKeySigner};
-use bridge::createorder;
 use dotenv::dotenv;
 use entity::orders;
-use sea_orm::{prelude::Decimal, ActiveModelTrait, Database, DatabaseConnection, Set};
-use std::str::FromStr;
-use tokio::sync::OnceCell;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
     tracing_subscriber::fmt::init();
-    db::connect_static_db();
     db::save_order(
         1,
         true,

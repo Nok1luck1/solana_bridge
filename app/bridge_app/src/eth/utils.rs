@@ -1,6 +1,5 @@
 use crate::eth::Bridge;
 use crate::eth::ERC20;
-use alloy::eips::eip4844::c_kzg::Bytes32;
 use alloy::primitives::{Address, FixedBytes, U256};
 use alloy::providers::{fillers::JoinFill, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;

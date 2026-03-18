@@ -1,13 +1,12 @@
-use crate::eth::{self, utils};
+use crate::eth::{self};
 use alloy::primitives::FixedBytes;
 use alloy::sol_types::SolEvent;
 use alloy::{
     eips::BlockNumberOrTag,
-    primitives::{address, Address},
+    primitives::Address,
     providers::{Provider, ProviderBuilder, WsConnect},
     rpc::types::Filter,
 };
-use bridge::order;
 use futures::StreamExt;
 use std::{error::Error, str::FromStr};
 

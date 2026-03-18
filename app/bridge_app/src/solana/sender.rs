@@ -7,7 +7,7 @@ use anyhow::Ok;
 use std::rc::Rc;
 use std::time::SystemTime;
 
-async fn execute_order(
+async fn _execute_order(
     admin: Keypair,
     program: &anchor_client::Program<Rc<Keypair>>,
     token_mint: Pubkey,

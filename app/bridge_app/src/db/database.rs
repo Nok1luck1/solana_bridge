@@ -5,7 +5,7 @@ use sea_orm::IntoActiveModel;
 use sea_orm::{
     prelude::Decimal, ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set,
 };
-use sea_orm::{EntityTrait, QueryFilter};
+use sea_orm::EntityTrait;
 use tokio::sync::OnceCell;
 
 static DB: OnceCell<DatabaseConnection> = OnceCell::const_new();
@@ -29,8 +29,8 @@ pub async fn save_order(
     amount1: i64,
     timestart: i64,
     timeend: i64,
-    hashsol: String,
-    hashevm: String,
+    _hashsol: String,
+    _hashevm: String,
 ) -> Result<(), DbErr> {
     let database = connect_static_db().await;
     let create_order = orders::ActiveModel {
