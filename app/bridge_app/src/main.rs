@@ -4,8 +4,12 @@ pub mod eth;
 pub mod solana;
 pub mod types;
 use crate::solana::utils;
+use anchor_client::solana_sdk::signature::read_keypair_file;
+use anchor_client::Client;
+use anchor_client::Cluster;
 use dotenv::dotenv;
 use entity::orders;
+use std::rc::Rc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -32,12 +36,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     let orders = eth::scan_for_orders().await?;
     // }
 
-    //let get_ord_info = eth::get_order_info(_check.unwrap(), &provider);
-    // let _latest_block = eth::latest_block(&provider);
-
-    // let _payer = read_keypair_file("../../bridge/tests/keys/admin1.json")?;
-    // let _client = Client::new(Cluster::Localnet, Rc::new(_payer));
-    // let _program: anchor_client::Program<Rc<Keypair>> = _client.program(bridge::ID)?;
     // let _admin = solana::utils::get_admin_config(&_program).await?;
     // let _order_id = solana::utils::get_current_order_id(&_program).await?;
     // let _check = solana::scanner::checking();

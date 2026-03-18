@@ -1,28 +1,43 @@
-use anchor_client::solana_sdk::signature::Keypair;
+use anchor_client::solana_sdk::signature::{read_keypair_file, Keypair};
+use anchor_client::Client;
+use anchor_client::Cluster;
 use anchor_lang::prelude::Pubkey;
 use anchor_spl::associated_token::{self, get_associated_token_address};
 use anyhow::Ok;
 use bridge::{AdminConfig, OrderId};
-use std::rc::Rc;
+use futures::stream::Once;
 
-pub async fn get_current_order_id(
-    program: &anchor_client::Program<Rc<Keypair>>,
-) -> Result<(Pubkey, OrderId), anyhow::Error> {
+use std::sync::Arc;
+use tokio::sync::OnceCell;
+
+static SOLANA_CLIENT: OnceCell<anchor_client::Program<Arc<Keypair>>> = OnceCell::const_new();
+
+pub async fn get_solana_provider() -> &'static anchor_client::Program<Arc<Keypair>> {
+    SOLANA_CLIENT
+        .get_or_init(|| async {
+            let _payer = read_keypair_file("../../../bridge/tests/keys/admin1.json").unwrap();
+            let _client = Client::new(Cluster::Localnet, Arc::new(_payer));
+            _client.program(bridge::ID).unwrap()
+        })
+        .await
+}
+
+pub async fn get_current_order_id() -> Result<(Pubkey, OrderId), anyhow::Error> {
+    let program = get_solana_provider();
     let (order_id_pda, _) = Pubkey::find_program_address(&[b"order_id"], &bridge::ID);
     println!("{:?}", order_id_pda);
-    let order_id_account: bridge::OrderId = program.account(order_id_pda).await?;
+    let order_id_account: bridge::OrderId = program.await.account(order_id_pda).await?;
     println!(
         "{:?},{:?},order counter and bump",
         order_id_account.counter, order_id_account.bump
     );
     Ok((order_id_pda, order_id_account))
 }
-pub async fn get_admin_config(
-    program: &anchor_client::Program<Rc<Keypair>>,
-) -> Result<(Pubkey, AdminConfig), anyhow::Error> {
+pub async fn get_admin_config() -> Result<(Pubkey, AdminConfig), anyhow::Error> {
+    let program = get_solana_provider();
     let (admin_config_pda, _) = Pubkey::find_program_address(&[b"adminconfig"], &bridge::ID);
     println!("{:?}", admin_config_pda);
-    let admin_config_account: bridge::AdminConfig = program.account(admin_config_pda).await?;
+    let admin_config_account: bridge::AdminConfig = program.await.account(admin_config_pda).await?;
     println!(
         "{:?},{:?},admins and setttet",
         admin_config_account.admins, admin_config_account.settet
@@ -30,16 +45,16 @@ pub async fn get_admin_config(
     Ok((admin_config_pda, admin_config_account))
 }
 pub async fn get_specific_order(
-    program: &anchor_client::Program<Rc<Keypair>>,
     user: Pubkey,
     order_counter: u64,
 ) -> Result<(Pubkey, bridge::Order), anyhow::Error> {
+    let program = get_solana_provider();
     let (order_pda, _) = Pubkey::find_program_address(
         &[b"order", user.as_ref(), &order_counter.to_le_bytes()],
         &bridge::ID,
     );
     println!("{:?}", order_pda);
-    let order_account: bridge::Order = program.account(order_pda).await?;
+    let order_account: bridge::Order = program.await.account(order_pda).await?;
     println!(
         "{:?},{:?},{:?},",
         order_account.id, order_account.maker, order_account.timestart
@@ -47,7 +62,6 @@ pub async fn get_specific_order(
     Ok((order_pda, order_account))
 }
 pub async fn get_token_vault(
-    _program: &anchor_client::Program<Rc<Keypair>>,
     token_mint: Pubkey,
     associated_token_account: Pubkey,
 ) -> Result<Pubkey, anyhow::Error> {

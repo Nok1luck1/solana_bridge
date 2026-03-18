@@ -1,15 +1,16 @@
+use crate::solana::get_solana_provider;
 use crate::utils;
 use anchor_client::solana_sdk::{signature::Keypair, signer::Signer};
 use anchor_lang::prelude::Pubkey;
 
 use anyhow::Ok;
 
-use std::rc::Rc;
+use std::sync::Arc;
 use std::time::SystemTime;
 
 async fn _execute_order(
     admin: Keypair,
-    program: &anchor_client::Program<Rc<Keypair>>,
+    program: &anchor_client::Program<Arc<Keypair>>,
     token_mint: Pubkey,
     associated_token_account: Pubkey,
     amount0: u64,
@@ -18,9 +19,10 @@ async fn _execute_order(
     maker: String,
     receiver: Pubkey,
 ) -> Result<(), anyhow::Error> {
+    let program = get_solana_provider();
     let timeend = SystemTime::now().elapsed().unwrap().as_secs() as i64;
-    let (order_id_pda, order_id) = utils::get_current_order_id(&program).await?;
-    let (admin_config_pda, _admin_config) = utils::get_admin_config(&program).await?;
+    let (order_id_pda, order_id) = utils::get_current_order_id().await?;
+    let (admin_config_pda, _admin_config) = utils::get_admin_config().await?;
     let (order_execution, _bump_exec) = Pubkey::find_program_address(
         &[
             b"order_execution",
@@ -30,8 +32,9 @@ async fn _execute_order(
         &bridge::ID,
     );
     let user_ata = utils::get_user_ata(token_mint, receiver).await?;
-    let vault_ata = utils::get_token_vault(program, token_mint, associated_token_account).await?;
+    let vault_ata = utils::get_token_vault(token_mint, associated_token_account).await?;
     let _send_transaction = program
+        .await
         .request()
         .accounts(bridge::accounts::ExecuteOrder {
             order_id: order_id_pda, // PDA order_id
