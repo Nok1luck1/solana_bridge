@@ -1,16 +1,55 @@
+use crate::eth::Bridge;
 use crate::eth::ERC20;
 use alloy::eips::eip4844::c_kzg::Bytes32;
 use alloy::primitives::{Address, FixedBytes, U256};
-use alloy::providers::fillers::JoinFill;
-use alloy::providers::ProviderBuilder;
+use alloy::providers::{fillers::JoinFill, ProviderBuilder};
+use alloy::signers::local::PrivateKeySigner;
 use std::error::Error;
 use std::str::FromStr;
+use tokio::sync::OnceCell;
 use tracing::error;
 
-use crate::eth::Bridge;
-static EVM_PROVIDER: OnceCell<Provider> = OnceCell::const_new();
+static EVM_PROVIDER: OnceCell<
+    alloy::providers::fillers::FillProvider<
+        JoinFill<
+            alloy::providers::fillers::JoinFill<
+                alloy::providers::Identity,
+                alloy::providers::fillers::JoinFill<
+                    alloy::providers::fillers::GasFiller,
+                    alloy::providers::fillers::JoinFill<
+                        alloy::providers::fillers::BlobGasFiller,
+                        alloy::providers::fillers::JoinFill<
+                            alloy::providers::fillers::NonceFiller,
+                            alloy::providers::fillers::ChainIdFiller,
+                        >,
+                    >,
+                >,
+            >,
+            alloy::providers::fillers::WalletFiller<alloy::network::EthereumWallet>,
+        >,
+        alloy::providers::RootProvider,
+    >,
+> = OnceCell::const_new();
 
-pub async fn connect_static_evm_provider() -> &'static Provider {
+pub async fn connect_static_evm_provider() -> &'static alloy::providers::fillers::FillProvider<
+    JoinFill<
+        alloy::providers::fillers::JoinFill<
+            alloy::providers::Identity,
+            alloy::providers::fillers::JoinFill<
+                alloy::providers::fillers::GasFiller,
+                alloy::providers::fillers::JoinFill<
+                    alloy::providers::fillers::BlobGasFiller,
+                    alloy::providers::fillers::JoinFill<
+                        alloy::providers::fillers::NonceFiller,
+                        alloy::providers::fillers::ChainIdFiller,
+                    >,
+                >,
+            >,
+        >,
+        alloy::providers::fillers::WalletFiller<alloy::network::EthereumWallet>,
+    >,
+    alloy::providers::RootProvider,
+> {
     EVM_PROVIDER
         .get_or_init(|| async {
             let provider_end_point =
@@ -21,15 +60,16 @@ pub async fn connect_static_evm_provider() -> &'static Provider {
             let signer: PrivateKeySigner = private_key.parse().expect("private key parse error");
 
             ProviderBuilder::new()
+                .wallet(signer)
                 .connect(provider_end_point.as_str())
                 .await
-                .expect("Failed to connect evm")
+                .expect("CAnnection evm errro")
         })
         .await
 }
 
 pub async fn check_balance(token_addr: Address) -> Result<U256, Box<dyn Error>> {
-    let provider = connect_static_evm_provider().await?;
+    let provider = connect_static_evm_provider().await;
     let token = ERC20::new(token_addr, provider);
     let addr = std::env::var("CONTRACT_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
@@ -45,7 +85,7 @@ pub async fn distribute_reward(
     amount_deposited: u64,
     amount_to_distribute: U256,
 ) -> Result<(), Box<dyn Error>> {
-    let provider = connect_static_evm_provider().await?;
+    let provider = connect_static_evm_provider().await;
     let addr = std::env::var("CONTRACT_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
     let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
@@ -66,7 +106,7 @@ pub async fn distribute_reward(
     Ok(())
 }
 pub async fn get_order_info(order_id: FixedBytes<32>) -> Result<Bridge::Order, Box<dyn Error>> {
-    let provider = connect_static_evm_provider().await?;
+    let provider = connect_static_evm_provider().await;
     let addr = std::env::var("CONTRACT_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
     let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
@@ -74,3 +114,8 @@ pub async fn get_order_info(order_id: FixedBytes<32>) -> Result<Bridge::Order, B
     //println!("getInfo about order {order_id},{order_info:?}");
     Ok(order_info)
 }
+// pub async fn latest_block() -> Result<u64, Box<dyn Error>> {
+//     let provider = connect_static_evm_provider();
+//     let current_block = provider.get_block_number().await;
+//     Ok(current_block)
+// }

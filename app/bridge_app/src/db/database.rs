@@ -7,6 +7,7 @@ use sea_orm::{
 };
 use sea_orm::{EntityTrait, QueryFilter};
 use tokio::sync::OnceCell;
+
 static DB: OnceCell<DatabaseConnection> = OnceCell::const_new();
 
 pub async fn connect_static_db() -> &'static DatabaseConnection {
