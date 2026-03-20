@@ -6,7 +6,7 @@ use yellowstone_grpc_proto::geyser::{
     subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
     SubscribeRequestFilterTransactions, SubscribeRequestPing,
 };
-pub async fn checking() -> Result<Option<OrderFormatter>, Box<dyn std::error::Error>> {
+pub async fn scan_for_order_sol() -> Result<Option<OrderFormatter>, Box<dyn std::error::Error>> {
     let mut grpc_client = GeyserGrpcClient::build_from_static("http://127.0.0.1:10000")
         .connect()
         .await?;

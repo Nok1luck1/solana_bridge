@@ -10,7 +10,7 @@ use std::time::SystemTime;
 
 async fn _execute_order(
     admin: Keypair,
-    program: &anchor_client::Program<Arc<Keypair>>,
+    _program: &anchor_client::Program<Arc<Keypair>>,
     token_mint: Pubkey,
     associated_token_account: Pubkey,
     amount0: u64,

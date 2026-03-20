@@ -5,7 +5,6 @@ use anchor_lang::prelude::Pubkey;
 use anchor_spl::associated_token::{self, get_associated_token_address};
 use anyhow::Ok;
 use bridge::{AdminConfig, OrderId};
-use futures::stream::Once;
 
 use std::sync::Arc;
 use tokio::sync::OnceCell;

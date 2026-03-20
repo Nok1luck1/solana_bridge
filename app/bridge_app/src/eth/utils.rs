@@ -62,7 +62,7 @@ pub async fn connect_static_evm_provider() -> &'static alloy::providers::fillers
                 .wallet(signer)
                 .connect(provider_end_point.as_str())
                 .await
-                .expect("CAnnection evm errro")
+                .expect("Connection evm error")
         })
         .await
 }
