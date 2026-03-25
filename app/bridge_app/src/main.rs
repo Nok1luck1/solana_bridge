@@ -1,5 +1,6 @@
 pub mod db;
 pub mod entity;
+
 pub mod eth;
 pub mod solana;
 pub mod types;
@@ -7,6 +8,7 @@ use crate::solana::utils;
 use dotenv::dotenv;
 use entity::orders;
 use tokio::time::{timeout, Duration};
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
@@ -28,12 +30,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // .await?;
     // println!("erberberb");
     let mut interval = tokio::time::interval(Duration::from_secs(5));
-
+    let evm_interval: u64 = std::env::var("EVM_INTERVAL")
+        .unwrap_or("5".to_string())
+        .parse()
+        .unwrap();
+    let solana_interval: u64 = std::env::var("SOLANA_INTERVAL")
+        .unwrap_or("5".to_string())
+        .parse()
+        .unwrap();
     loop {
         interval.tick().await;
-
-        tokio::spawn(async {
-            if timeout(Duration::from_secs(5), eth::scan_for_orders())
+        tokio::spawn(async move {
+            if timeout(Duration::from_secs(evm_interval), eth::scan_for_orders())
                 .await
                 .is_ok()
             {
@@ -44,9 +52,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
 
         tokio::spawn(async {
-            if timeout(Duration::from_secs(5), solana::scan_for_order_sol())
-                .await
-                .is_ok()
+            if timeout(
+                Duration::from_secs(solana_interval),
+                solana::scan_for_order_sol(),
+            )
+            .await
+            .is_ok()
             {
                 println!("Success Solana");
             } else {

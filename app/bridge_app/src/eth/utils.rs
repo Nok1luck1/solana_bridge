@@ -113,6 +113,7 @@ pub async fn get_order_info(order_id: FixedBytes<32>) -> Result<Bridge::Order, B
     //println!("getInfo about order {order_id},{order_info:?}");
     Ok(order_info)
 }
+
 // pub async fn latest_block() -> Result<u64, Box<dyn Error>> {
 //     let provider = connect_static_evm_provider();
 //     let current_block = provider.get_block_number().await;

@@ -3,6 +3,7 @@ use anchor_client::Client;
 use anchor_client::Cluster;
 use anchor_lang::prelude::Pubkey;
 use anchor_spl::associated_token::{self, get_associated_token_address};
+use anchor_spl::token::TokenAccount;
 use anyhow::Ok;
 use bridge::{AdminConfig, OrderId};
 
@@ -75,4 +76,11 @@ pub async fn get_token_vault(
 pub async fn get_user_ata(token_mint: Pubkey, user: Pubkey) -> Result<Pubkey, anyhow::Error> {
     let user_ata = get_associated_token_address(&user, &token_mint);
     Ok(user_ata)
+}
+pub async fn get_vault_balance(token_mint: Pubkey) -> Result<u64, anyhow::Error> {
+    let program = get_solana_provider().await;
+    let (pubk, _) = get_admin_config().await?;
+    let vault_ata = get_associated_token_address(&pubk, &token_mint);
+    let vault_acc: TokenAccount = program.account(vault_ata).await?;
+    Ok(vault_acc.amount)
 }

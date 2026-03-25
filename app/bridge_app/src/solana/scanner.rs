@@ -7,7 +7,13 @@ use yellowstone_grpc_proto::geyser::{
     SubscribeRequestFilterTransactions, SubscribeRequestPing,
 };
 pub async fn scan_for_order_sol() -> Result<Option<OrderFormatter>, Box<dyn std::error::Error>> {
-    let mut grpc_client = GeyserGrpcClient::build_from_static("http://127.0.0.1:10000")
+    let grpc_address: &'static str = Box::leak(
+        std::env::var("GRPC_ADDRESS")
+            .unwrap_or_else(|_| "http://127.0.0.1:10000".to_owned())
+            .into_boxed_str(),
+    );
+
+    let mut grpc_client = GeyserGrpcClient::build_from_static(grpc_address)
         .connect()
         .await?;
 
@@ -21,7 +27,7 @@ pub async fn scan_for_order_sol() -> Result<Option<OrderFormatter>, Box<dyn std:
 
     println!("must be started");
     let (mut subscribe_tx, mut stream) = grpc_client.subscribe_with_request(Some(request)).await?;
-    println!("Subscribed! Waiting for transactions...");
+    println!("Subscribed,,, Waiting for transactions");
 
     while let Some(msg) = stream.next().await {
         match msg {
