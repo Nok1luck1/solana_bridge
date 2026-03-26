@@ -41,9 +41,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         interval.tick().await;
         tokio::spawn(async move {
-            if timeout(Duration::from_secs(evm_interval), eth::scan_for_orders())
-                .await
-                .is_ok()
+            if timeout(
+                Duration::from_secs(evm_interval),
+                eth::scan_for_orders().await,
+            )
+            .await
+            .is_ok()
             {
                 println!("Success EVM");
             } else {
