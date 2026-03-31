@@ -31,11 +31,11 @@ pub fn decode(data: &[u8]) -> Option<OrderFormatter> {
             decoded.timecreation,
             0,
             decoded.token1,
-            decoded.token0,
+            decoded.token0.to_string(),
             decoded.amount0,
             decoded.amount1,
             decoded.receiver,
-            decoded.sender,
+            decoded.sender.to_string(),
         );
         return Some(order);
     }
@@ -55,11 +55,11 @@ pub fn decode(data: &[u8]) -> Option<OrderFormatter> {
             decoded.timestarted,
             decoded.timeexecuted,
             decoded.token0,
-            decoded.token1,
+            decoded.token1.to_string(),
             decoded.amount0,
             decoded.amount1,
             decoded.sender,
-            decoded.receiver,
+            decoded.receiver.to_string(),
         );
         return Some(order);
     }
@@ -78,11 +78,11 @@ pub fn decode(data: &[u8]) -> Option<OrderFormatter> {
             decoded.timestarted,
             decoded.time_cancelled,
             decoded.token1,
-            decoded.token0,
+            decoded.token0.to_string(),
             decoded.amount0,
             0,
             String::new(),
-            decoded.maker,
+            decoded.maker.to_string(),
         );
         return Some(order);
     }
