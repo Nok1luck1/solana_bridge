@@ -26,6 +26,7 @@ contract Bridge is AccessControl {
         uint amount0;
         uint amount1;
         uint timestamp;
+        uint timeexecute;
         string receiver;
         string token1;
         StatusOrder orderStatus;
@@ -49,6 +50,7 @@ contract Bridge is AccessControl {
             amount0: amount0,
             amount1: amount1,
             timestamp: block.timestamp,
+            timeexecute:0,
             receiver: solAddress,
             token1: solMintAcc,
             orderStatus: StatusOrder.Initialized,
@@ -68,6 +70,7 @@ contract Bridge is AccessControl {
     }
 
     function order_for_execution(
+        uint256 timeinited,
         address receiver,
         string memory _token0,
         address token1,
@@ -85,7 +88,8 @@ contract Bridge is AccessControl {
             token0: token1,
             amount0: amount0,
             amount1: amount1,
-            timestamp: block.timestamp,
+            timestamp: timeinited,
+            timeexecute:block.timestamp,
             receiver: sender,
             token1: _token0,
             orderStatus: StatusOrder.Initialized,

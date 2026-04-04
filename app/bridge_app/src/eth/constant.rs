@@ -20,13 +20,14 @@ sol! {
         Completed,
         Canceled
     }
-    struct Order {
+   struct Order {
         address maker;
         address token0;
         uint amount0;
         uint amount1;
         uint timestamp;
-        string userSol;
+        uint timeexecute;
+        string receiver;
         string token1;
         StatusOrder orderStatus;
         OrderType orderType;

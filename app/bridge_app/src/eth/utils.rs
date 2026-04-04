@@ -70,7 +70,7 @@ pub async fn connect_static_evm_provider() -> &'static alloy::providers::fillers
 pub async fn check_balance(token_addr: Address) -> Result<U256, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
     let token = ERC20::new(token_addr, provider);
-    let addr = std::env::var("CONTRACT_ADDR").expect("Contract addr must be set in .env");
+    let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
     let bridge_balance = token.balanceOf(contract_address.unwrap()).call().await?;
     Ok(bridge_balance)
@@ -85,7 +85,7 @@ pub async fn distribute_reward(
     amount_to_distribute: U256,
 ) -> Result<(), Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
-    let addr = std::env::var("CONTRACT_ADDR").expect("Contract addr must be set in .env");
+    let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
     let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
     let current_available_balance: U256 = check_balance(token_to_distribute).await?;
@@ -106,16 +106,10 @@ pub async fn distribute_reward(
 }
 pub async fn get_order_info(order_id: FixedBytes<32>) -> Result<Bridge::Order, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
-    let addr = std::env::var("CONTRACT_ADDR").expect("Contract addr must be set in .env");
+    let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
     let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
     let order_info: Bridge::Order = bridge_contract.getOrderInfo(order_id).call().await?;
-    //println!("getInfo about order {order_id},{order_info:?}");
+    println!("getInfo about order {order_id}");
     Ok(order_info)
 }
-
-// pub async fn latest_block() -> Result<u64, Box<dyn Error>> {
-//     let provider = connect_static_evm_provider();
-//     let current_block = provider.get_block_number().await;
-//     Ok(current_block)
-// }

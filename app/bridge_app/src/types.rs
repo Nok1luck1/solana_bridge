@@ -1,5 +1,8 @@
-use std::fmt;
 use std::fmt::Display;
+use std::{fmt, str::FromStr};
+
+use alloy::primitives::{Address, U256};
+use anchor_lang::prelude::Pubkey;
 
 #[derive(Debug)]
 pub struct OrderFormatter {
@@ -49,5 +52,37 @@ impl OrderFormatter {
             sender,
             receiver,
         }
+    }
+    pub fn format_for_evm(self) -> (i64, i64, Address, String, U256, U256, Address, String) {
+        let receiver_form = Address::from_str(&self.receiver).unwrap();
+        let token_form = Address::from_str(&self.token0).unwrap();
+
+        let amount0 = U256::from(self.amount0);
+        let amount1 = U256::from(self.amount1);
+        return (
+            self.time_started,
+            self.time_executed,
+            token_form,
+            self.token1,
+            amount0,
+            amount1,
+            receiver_form,
+            self.sender,
+        );
+    }
+    pub fn format_for_solana(self) -> (i64, i64, Pubkey, String, i64, i64, Pubkey, String) {
+        let receiver_form = Pubkey::from_str(&self.receiver).unwrap();
+        let token_form = Pubkey::from_str(&self.token0).unwrap();
+
+        return (
+            self.time_started,
+            self.time_executed,
+            token_form,
+            self.token1,
+            self.amount0 as i64,
+            self.amount1 as i64,
+            receiver_form,
+            self.sender,
+        );
     }
 }

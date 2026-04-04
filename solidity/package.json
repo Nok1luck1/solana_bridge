@@ -16,6 +16,10 @@
     "hardhat-gas-reporter": "^1.0.9",
     "solidity-docgen": "^0.6.0-beta.36"
   },
+  "scripts": {
+    "deploy": "hardhat run scripts/deploy.js --network localhost",
+    "simulate": "hardhat run scripts/simulation.js --network localhost"
+  },
   "dependencies": {
     "@ethereumjs/vm": "^8.0.0",
     "@nomicfoundation/hardhat-network-helpers": "1.0.10",
