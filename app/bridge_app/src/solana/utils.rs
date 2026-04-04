@@ -73,6 +73,7 @@ pub async fn get_token_vault(
     );
     Ok(vault_account)
 }
+//Getting ATA for user pubkey
 pub async fn get_user_ata(token_mint: Pubkey, user: Pubkey) -> Result<Pubkey, anyhow::Error> {
     let user_ata = get_associated_token_address(&user, &token_mint);
     Ok(user_ata)

@@ -38,7 +38,6 @@ pub struct ExecuteOrder<'info> {
     #[account(
         seeds = [b"adminconfig"],
         bump = admin_config.bump,
-        //constraint = admin_config.is_admin(&admin.key()) @ ErrorCode::UnauthorizedAdmin,
     )]
     pub admin_config: Account<'info, AdminConfig>,
     pub token_program: Interface<'info, TokenInterface>,

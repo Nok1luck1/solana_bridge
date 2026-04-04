@@ -5,19 +5,18 @@ use anchor_lang::prelude::Pubkey;
 
 use anyhow::Ok;
 
-use std::sync::Arc;
 use std::time::SystemTime;
 
 async fn _execute_order(
-    admin: Keypair,
-    _program: &anchor_client::Program<Arc<Keypair>>,
-    token_mint: Pubkey,
-    associated_token_account: Pubkey,
-    amount0: u64,
-    amount1: u64,
-    token0: String,
-    maker: String,
+    _time_started: i64,
+    _time_executed: i64,
+    token0: Pubkey,
+    token1: String,
+    amount0: i64,
+    amount1: i64,
+    sender: String,
     receiver: Pubkey,
+    admin: Keypair,
 ) -> Result<(), anyhow::Error> {
     let program = get_solana_provider();
     let timeend = SystemTime::now().elapsed().unwrap().as_secs() as i64;
@@ -31,29 +30,29 @@ async fn _execute_order(
         ],
         &bridge::ID,
     );
-    let user_ata = utils::get_user_ata(token_mint, receiver).await?;
-    let vault_ata = utils::get_token_vault(token_mint, associated_token_account).await?;
+    let user_ata = utils::get_user_ata(token0, receiver).await?;
+    let vault_ata = utils::get_token_vault(token0, user_ata).await?;
     let _send_transaction = program
         .await
         .request()
         .accounts(bridge::accounts::ExecuteOrder {
             order_id: order_id_pda, // PDA order_id
             order_execution,        // PDA order_execution
-            token_1_mint: token_mint,
+            token_1_mint: token0,
             receiver_token_account: user_ata,
             vault_token_program: vault_ata,
-            admin: admin.pubkey(),
+            admin: admin_config_pda,
             admin_config: admin_config_pda,
-            token_program: token_mint,
+            token_program: token0,
             system_program: bridge::ID,
             associated_token_program: anchor_spl::associated_token::ID,
         })
         .args(bridge::instruction::OrderForExecution {
             receiver: receiver,
-            token0amount: amount0,
-            token1amount: amount1,
-            token0: token0,
-            sender: maker,
+            token0amount: amount0 as u64,
+            token1amount: amount1 as u64,
+            token0: token1,
+            sender: sender,
             timestart: timeend,
         })
         .signer(admin)
