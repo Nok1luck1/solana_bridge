@@ -7,7 +7,7 @@ use anyhow::Ok;
 
 use std::time::SystemTime;
 
-async fn _execute_order(
+pub async fn execute_order(
     _time_started: i64,
     _time_executed: i64,
     token0: Pubkey,
@@ -16,8 +16,9 @@ async fn _execute_order(
     amount1: i64,
     sender: String,
     receiver: Pubkey,
-    admin: Keypair,
 ) -> Result<(), anyhow::Error> {
+    let admin_keypair: Keypair =
+        Keypair::from_base58_string(std::env::var("ADMIN_KEYPAIR").unwrap().as_str());
     let program = get_solana_provider();
     let timeend = SystemTime::now().elapsed().unwrap().as_secs() as i64;
     let (order_id_pda, order_id) = utils::get_current_order_id().await?;
@@ -25,7 +26,7 @@ async fn _execute_order(
     let (order_execution, _bump_exec) = Pubkey::find_program_address(
         &[
             b"order_execution",
-            admin.pubkey().as_array().as_ref(),
+            admin_keypair.pubkey().as_array().as_ref(),
             &order_id.counter.to_le_bytes(),
         ],
         &bridge::ID,
@@ -55,7 +56,7 @@ async fn _execute_order(
             sender: sender,
             timestart: timeend,
         })
-        .signer(admin)
+        .signer(admin_keypair)
         .send();
     Ok(())
 }

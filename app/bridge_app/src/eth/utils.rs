@@ -76,7 +76,7 @@ pub async fn check_balance(token_addr: Address) -> Result<U256, Box<dyn Error>> 
     Ok(bridge_balance)
 }
 
-pub async fn distribute_reward(
+pub async fn execute_order_evm(
     address_receiver: Address,
     token_deposited: String,
     token_to_distribute: Address,

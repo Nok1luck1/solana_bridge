@@ -1,3 +1,4 @@
+use crate::OrderFormatter;
 use anchor_client::solana_sdk::signature::{read_keypair_file, Keypair};
 use anchor_client::Client;
 use anchor_client::Cluster;
@@ -6,7 +7,6 @@ use anchor_spl::associated_token::{self, get_associated_token_address};
 use anchor_spl::token::TokenAccount;
 use anyhow::Ok;
 use bridge::{AdminConfig, OrderId};
-
 use std::sync::Arc;
 use tokio::sync::OnceCell;
 
@@ -47,7 +47,7 @@ pub async fn get_admin_config() -> Result<(Pubkey, AdminConfig), anyhow::Error> 
 pub async fn get_specific_order(
     user: Pubkey,
     order_counter: u64,
-) -> Result<(Pubkey, bridge::Order), anyhow::Error> {
+) -> Result<(Pubkey, OrderFormatter), anyhow::Error> {
     let program = get_solana_provider();
     let (order_pda, _) = Pubkey::find_program_address(
         &[b"order", user.as_ref(), &order_counter.to_le_bytes()],
@@ -59,7 +59,17 @@ pub async fn get_specific_order(
         "{:?},{:?},{:?},",
         order_account.id, order_account.maker, order_account.timestart
     );
-    Ok((order_pda, order_account))
+    let order_form = OrderFormatter::new(
+        order_account.timestart,
+        0,
+        order_account.token0.to_string(),
+        order_account.token1,
+        order_account.token0amount,
+        order_account.token1amount,
+        order_account.maker.to_string(),
+        order_account.receiver,
+    );
+    Ok((order_pda, order_form))
 }
 pub async fn get_token_vault(
     token_mint: Pubkey,
