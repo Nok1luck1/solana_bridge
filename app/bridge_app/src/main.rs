@@ -77,7 +77,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     println!("{:?} Order in solana gettet", order);
                     let order_formattet = verify_order.1.format_for_evm();
-                    // let execute = eth::execute_order_evm(order_formattet.)
+                    let execute = eth::execute_order_evm(
+                        order_formattet.0,
+                        order_formattet.1,
+                        order_formattet.2,
+                        order_formattet.3,
+                        order_formattet.4,
+                        order_formattet.5,
+                    )
+                    .await?;
+                    println!("{execute:?}");
                 }
                 Ok(Ok(None)) => {}
                 Ok(Err(e)) => {

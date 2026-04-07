@@ -53,21 +53,17 @@ impl OrderFormatter {
             receiver,
         }
     }
-    pub fn format_for_evm(self) -> (i64, i64, Address, String, U256, U256, String, Address) {
+    pub fn format_for_evm(self) -> (Address, String, Address, String, u64, U256) {
         let receiver_form = Address::from_str(&self.receiver).unwrap();
         let token_form = Address::from_str(&self.token0).unwrap();
-
-        let amount0 = U256::from(self.amount0);
         let amount1 = U256::from(self.amount1);
         return (
-            self.time_started,
-            self.time_executed,
-            token_form,
-            self.token1,
-            amount0,
-            amount1,
-            self.sender,
             receiver_form,
+            self.token0,
+            token_form,
+            self.sender,
+            self.amount0,
+            amount1,
         );
     }
     pub fn format_for_solana(self) -> (i64, i64, Pubkey, String, i64, i64, String, Pubkey) {
