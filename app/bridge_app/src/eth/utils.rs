@@ -1,6 +1,6 @@
 use crate::eth::Bridge;
 use crate::eth::ERC20;
-use alloy::primitives::{Address, FixedBytes, U256};
+use alloy::primitives::{Address, U256};
 use alloy::providers::{fillers::JoinFill, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
 use std::error::Error;
@@ -104,12 +104,12 @@ pub async fn execute_order_evm(
     let _distribute_tx = disctribute_token.send().await?;
     Ok(())
 }
-pub async fn get_order_info(order_id: FixedBytes<32>) -> Result<Bridge::Order, Box<dyn Error>> {
+pub async fn get_order_info(order_id: U256) -> Result<Bridge::Order, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
     let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
-    let order_info: Bridge::Order = bridge_contract.getOrderInfo(order_id).call().await?;
+    let order_info: Bridge::Order = bridge_contract.getOrderInfo(order_id.into()).call().await?;
     println!("getInfo about order {order_id}");
     Ok(order_info)
 }

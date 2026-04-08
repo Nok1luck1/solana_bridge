@@ -1,5 +1,5 @@
 use crate::eth::{self};
-use alloy::primitives::FixedBytes;
+use alloy::primitives::{FixedBytes, U256};
 use alloy::sol_types::SolEvent;
 use alloy::{
     eips::BlockNumberOrTag,
@@ -10,7 +10,7 @@ use alloy::{
 use futures::StreamExt;
 use std::{error::Error, str::FromStr};
 
-pub async fn scan_for_orders() -> Result<Option<FixedBytes<32>>, Box<dyn Error>> {
+pub async fn scan_for_orders() -> Result<Option<(U256, FixedBytes<32>)>, Box<dyn Error>> {
     let rpc_url = std::env::var("WEBSOCKET_EVM").expect("WS url missing");
     let ws_connect = WsConnect::new(rpc_url);
     let provider = ProviderBuilder::new().connect_ws(ws_connect).await?;
@@ -18,7 +18,7 @@ pub async fn scan_for_orders() -> Result<Option<FixedBytes<32>>, Box<dyn Error>>
     let contract = Address::from_str(&contract_addr_env.as_str()).unwrap();
     let filter = Filter::new()
         .address(contract)
-        .event("OrderCreated(bytes32)")
+        .event("OrderCreated(U256)")
         .from_block(BlockNumberOrTag::Latest);
     let sub = provider.subscribe_logs(&filter).await?;
     let mut stream = sub.into_stream();
@@ -30,10 +30,12 @@ pub async fn scan_for_orders() -> Result<Option<FixedBytes<32>>, Box<dyn Error>>
             &log.data().data,
         ) {
             Ok(decoded) => {
-                let order_id: alloy::primitives::FixedBytes<32> = decoded.orderId;
+                let order_id: alloy::primitives::U256 = decoded.orderId;
+                let tx_hash = log.transaction_hash.unwrap();
                 println!("Decoded OrderCreated:");
-                println!("order_id: 0x{}", hex::encode(order_id));
-                return Ok(Some(order_id));
+                // println!("order_id: 0x{}", hex::encode(order_id));
+                // println!("tx_hash: 0x{}", hex::encode(tx_hash));
+                return Ok(Some((order_id, tx_hash)));
             }
             Err(e) => {
                 println!("Decode failed: {e}");

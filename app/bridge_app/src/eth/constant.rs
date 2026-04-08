@@ -32,11 +32,11 @@ sol! {
         StatusOrder orderStatus;
         OrderType orderType;
     }
-        event OrderCreated(bytes32 orderId);
-        event OrderExecuted(bytes32 orderId);
+        event OrderCreated(uint256 orderId);
+        event OrderExecuted(uint256 orderId);
         function balanceOf(address owner) public view returns (uint256);
         function allowance(address owner,address spender) public view returns(uint256);
-        function getOrderInfo(bytes32 orderID) public view returns(Order memory);
-        function distributeReward(address receiver,string memory _token0,address token1,string memory sender,uint256 amount0,uint256 amount1) public returns (bytes32 orderId);
+        function getOrderInfo(uint256 orderID) public view returns(Order memory);
+        function distributeReward(address receiver,string memory _token0,address token1,string memory sender,uint256 amount0,uint256 amount1) public returns (uint256 orderId);
    }
 }

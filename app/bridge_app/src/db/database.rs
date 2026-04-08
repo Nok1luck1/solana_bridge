@@ -1,11 +1,11 @@
 use crate::entity;
 use crate::orders;
 use entity::orders::Entity as OrdersEntity;
+use sea_orm::EntityTrait;
 use sea_orm::IntoActiveModel;
 use sea_orm::{
     prelude::Decimal, ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set,
 };
-use sea_orm::EntityTrait;
 use tokio::sync::OnceCell;
 
 static DB: OnceCell<DatabaseConnection> = OnceCell::const_new();
@@ -18,7 +18,7 @@ pub async fn connect_static_db() -> &'static DatabaseConnection {
     })
     .await
 }
-pub async fn save_order(
+pub async fn create_order(
     id: i32,
     fromevm: bool,
     maker: String,

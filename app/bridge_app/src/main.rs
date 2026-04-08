@@ -4,9 +4,8 @@ pub mod entity;
 pub mod eth;
 pub mod solana;
 pub mod types;
-use crate::solana::utils;
 use crate::types::OrderFormatter;
-use anchor_client::solana_sdk::signature::Keypair;
+use crate::{db::database, solana::utils};
 use anchor_lang::prelude::Pubkey;
 use dotenv::dotenv;
 use entity::orders;
@@ -22,10 +21,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or(5);
 
     loop {
-        // interval.tick().await;
-
         match timeout(Duration::from_secs(evm_interval), eth::scan_for_orders()).await {
-            Ok(Ok(Some(order_id))) => {
+            Ok(Ok(Some((order_id, tx_hash)))) => {
                 let result_order = eth::get_order_info(order_id).await.unwrap();
                 let struct_order: OrderFormatter = types::OrderFormatter::new(
                     result_order.timestamp.try_into().unwrap(),
@@ -38,10 +35,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     result_order.receiver.to_string(),
                 );
                 println!("{:?} Order EVM gettet", struct_order);
+                let _save_order_in_db = database::create_order(
+                    order_id.to::<i32>(),
+                    true,
+                    struct_order.sender.clone(),
+                    struct_order.receiver.clone(),
+                    struct_order.token0.clone(),
+                    struct_order.token1.clone(),
+                    struct_order.amount0 as i64,
+                    struct_order.amount1 as i64,
+                    struct_order.time_started,
+                    0,
+                    "".to_string(),
+                    tx_hash.to_string(),
+                );
                 let (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) =
                     struct_order.format_for_solana();
                 let execute_order_solana =
-                    solana::sender::execute_order(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                    solana::sender::execute_order(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+                        .await?;
+                database::update_order_with_hash_sol(
+                    order_id.to::<i32>(),
+                    execute_order_solana.to_string(),
+                );
+                println!("Transaction execution in solana network succesfully completed,hash is {execute_order_solana:?}");
             }
             Ok(Ok(None)) => {}
             Ok(Err(e)) => {

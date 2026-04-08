@@ -16,9 +16,10 @@ contract Bridge is AccessControl {
         Completed,
         Canceled
     }
-    mapping(bytes32 => Order) public orderByIndex;
-    event OrderCreated(bytes32 orderId);
-    event OrderExecuted(bytes32 orderId);
+    mapping(uint256 => Order) public orderByIndex;
+    uint256 public currentOrderCounter;
+    event OrderCreated(uint256 orderId);
+    event OrderExecuted(uint256 orderId);
 
     struct Order {
         address maker;
@@ -43,7 +44,7 @@ contract Bridge is AccessControl {
         uint amount1,
         string memory solAddress,
         string memory solMintAcc
-    ) public returns(bytes32 orderId){
+    ) public returns(uint256 orderId){
         Order memory order = Order({
             maker: msg.sender,
             token0: token0,
@@ -56,14 +57,8 @@ contract Bridge is AccessControl {
             orderStatus: StatusOrder.Initialized,
             orderType: OrderType.FromEVMtoSol
         });
-        orderId = keccak256(
-            abi.encodePacked(
-                order.maker,
-                order.timestamp,
-                order.token0,
-                order.token1
-            )
-        );
+        orderId = currentOrderCounter;
+        currentOrderCounter++;
         IERC20(token0).transfer(address(this), amount0);
         orderByIndex[orderId] = order;
         emit OrderCreated(orderId);
@@ -77,7 +72,7 @@ contract Bridge is AccessControl {
         string memory sender,
         uint256 amount0,
         uint256 amount1
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bytes32 orderId) {
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256 orderId) {
         uint256 balanceTokenForReward = IERC20(token1).balanceOf(address(this));
         require(
             balanceTokenForReward >= amount1,
@@ -95,20 +90,14 @@ contract Bridge is AccessControl {
             orderStatus: StatusOrder.Initialized,
             orderType: OrderType.FromEVMtoSol
         });
-        orderId = keccak256(
-            abi.encodePacked(
-                order.maker,
-                order.timestamp,
-                order.token0,
-                order.token1
-            )
-        );
+        orderId = currentOrderCounter;
+        currentOrderCounter++;
         IERC20(token1).transferFrom(address(this), receiver, amount1);
         orderByIndex[orderId] = order;
         emit OrderExecuted(orderId);
     }
 
-    function getOrderInfo(bytes32 orderID) public view returns (Order memory) {
+    function getOrderInfo(uint256 orderID) public view returns (Order memory) {
         return orderByIndex[orderID];
     }
 }

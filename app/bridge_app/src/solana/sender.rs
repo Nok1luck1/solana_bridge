@@ -1,6 +1,9 @@
 use crate::solana::get_solana_provider;
 use crate::utils;
-use anchor_client::solana_sdk::{signature::Keypair, signer::Signer};
+use anchor_client::solana_sdk::{
+    signature::{Keypair, Signature},
+    signer::Signer,
+};
 use anchor_lang::prelude::Pubkey;
 
 use anyhow::Ok;
@@ -16,7 +19,7 @@ pub async fn execute_order(
     amount1: i64,
     sender: String,
     receiver: Pubkey,
-) -> Result<(), anyhow::Error> {
+) -> Result<Signature , anyhow::Error> {
     let admin_keypair: Keypair =
         Keypair::from_base58_string(std::env::var("ADMIN_KEYPAIR").unwrap().as_str());
     let program = get_solana_provider();
@@ -37,8 +40,8 @@ pub async fn execute_order(
         .await
         .request()
         .accounts(bridge::accounts::ExecuteOrder {
-            order_id: order_id_pda, // PDA order_id
-            order_execution,        // PDA order_execution
+            order_id: order_id_pda,
+            order_execution,
             token_1_mint: token0,
             receiver_token_account: user_ata,
             vault_token_program: vault_ata,
@@ -57,6 +60,7 @@ pub async fn execute_order(
             timestart: timeend,
         })
         .signer(admin_keypair)
-        .send();
-    Ok(())
+        .send()
+        .await?;
+    Ok(_send_transaction )
 }
