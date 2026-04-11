@@ -6,7 +6,8 @@ use yellowstone_grpc_proto::geyser::{
     subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
     SubscribeRequestFilterTransactions, SubscribeRequestPing,
 };
-pub async fn scan_for_order_sol() -> Result<Option<OrderFormatter>, Box<dyn std::error::Error>> {
+pub async fn scan_for_order_sol(
+) -> Result<Option<(OrderFormatter, Vec<u8>)>, Box<dyn std::error::Error>> {
     let grpc_address: &'static str = Box::leak(
         std::env::var("GRPC_ADDRESS")
             .unwrap_or_else(|_| "http://127.0.0.1:10000".to_owned())

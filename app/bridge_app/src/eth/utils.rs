@@ -1,5 +1,6 @@
 use crate::eth::Bridge;
 use crate::eth::ERC20;
+use alloy::primitives::FixedBytes;
 use alloy::primitives::{Address, U256};
 use alloy::providers::{fillers::JoinFill, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
@@ -83,7 +84,7 @@ pub async fn execute_order_evm(
     address_sender: String,
     amount_deposited: u64,
     amount_to_distribute: U256,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<FixedBytes<32>, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
@@ -101,8 +102,9 @@ pub async fn execute_order_evm(
         U256::from(amount_deposited),
         U256::from(amount_to_distribute),
     );
-    let _distribute_tx = disctribute_token.send().await?;
-    Ok(())
+    let _distribute_tx = disctribute_token.send().await?.get_receipt().await?;
+
+    Ok(_distribute_tx.transaction_hash)
 }
 pub async fn get_order_info(order_id: U256) -> Result<Bridge::Order, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;

@@ -9,7 +9,7 @@ pub enum ProgramEvent {
     OrderCreated(bridge::OrderCreated),
 }
 
-pub fn decode(data: &[u8]) -> Option<OrderFormatter> {
+pub fn decode(data: &[u8]) -> Option<(OrderFormatter, Vec<u8>)> {
     if data.len() < 8 {
         return None;
     }
@@ -37,7 +37,7 @@ pub fn decode(data: &[u8]) -> Option<OrderFormatter> {
             decoded.receiver.to_string(),
             decoded.sender.to_string(),
         );
-        return Some(order);
+        return Some((order, payload.to_vec()));
     }
     if disc == bridge::OrderCompleted::DISCRIMINATOR {
         let decoded = bridge::OrderCompleted::try_from_slice(payload).unwrap();
@@ -61,7 +61,7 @@ pub fn decode(data: &[u8]) -> Option<OrderFormatter> {
             decoded.sender.to_string(),
             decoded.receiver.to_string(),
         );
-        return Some(order);
+        return Some((order, payload.to_vec()));
     }
     if disc == bridge::OrderCancelled::DISCRIMINATOR {
         let decoded = bridge::OrderCancelled::try_from_slice(payload).unwrap();
@@ -84,7 +84,7 @@ pub fn decode(data: &[u8]) -> Option<OrderFormatter> {
             String::new(),
             decoded.maker.to_string(),
         );
-        return Some(order);
+        return Some((order, payload.to_vec()));
     }
     return None;
 }
