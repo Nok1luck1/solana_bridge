@@ -13,6 +13,6 @@ to use grpc for parsing events from program need https://github.com/rpcpool/yell
     "address": "0.0.0.0:10000",
     "tls_config": null
   }
-} this copnfig with absolute path to file libyellowstone_grpc_geyser.so
+} this config with absolute path to file libyellowstone_grpc_geyser.so
 then start validator with additional config
 solana-test-validator   --geyser-plugin-config geyser-config.json 

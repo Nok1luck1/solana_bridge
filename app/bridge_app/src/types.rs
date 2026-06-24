@@ -3,8 +3,9 @@ use std::{fmt, str::FromStr};
 
 use alloy::primitives::{Address, U256};
 use anchor_lang::prelude::Pubkey;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct OrderFormatter {
     pub time_started: i64,
     pub time_executed: i64,

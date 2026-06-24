@@ -1,10 +1,10 @@
+use crate::db::database;
 use crate::entity;
 use crate::errors;
 use crate::eth;
 use crate::solana;
 use crate::types;
 use crate::types::OrderFormatter;
-use crate::db::database;
 
 use anchor_lang::prelude::Pubkey;
 use dotenv::dotenv;
@@ -12,9 +12,9 @@ use std::str::FromStr;
 use tokio::time::{timeout, Duration};
 
 pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
-    dotenv().ok();
+    // dotenv().ok();
 
-    tracing_subscriber::fmt::init();
+    // tracing_subscriber::fmt::init();
     let evm_interval: u64 = std::env::var("EVM_INTERVAL")
         .ok()
         .and_then(|v| v.parse().ok())
