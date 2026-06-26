@@ -1,8 +1,15 @@
+use crate::db::database;
 use crate::entity;
 use crate::orders;
+use crate::orders::Column;
+use crate::types::OrderFormatter;
+use bridge::order;
 use entity::orders::Entity as OrdersEntity;
 use sea_orm::EntityTrait;
+
 use sea_orm::IntoActiveModel;
+use sea_orm::QueryOrder;
+use sea_orm::QuerySelect;
 use sea_orm::{
     prelude::Decimal, ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set,
 };
@@ -70,4 +77,18 @@ pub async fn update_order_with_hash_sol(order_id: i32, hashsolan: String) -> Res
         println!("added hash solana for order {:?}", order_id);
     }
     Ok(())
+}
+pub async fn get_users_orders(limit: u64, offset: u64) -> Result<Vec<OrderFormatter>, DbErr> {
+    let database = connect_static_db().await;
+    let orders = OrdersEntity::find()
+        .order_by_asc(Column::Id)
+        .offset(offset)
+        .limit(limit)
+        .all(database)
+        .await?;
+    let result: Vec<OrderFormatter> = orders
+        .into_iter()
+        .map(|order| OrderFormatter::from_db_to_formatet(order))
+        .collect();
+    Ok(result)
 }

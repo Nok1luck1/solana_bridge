@@ -1,8 +1,11 @@
 use std::fmt::Display;
 use std::{fmt, str::FromStr};
 
+use crate::entity;
 use alloy::primitives::{Address, U256};
 use anchor_lang::prelude::Pubkey;
+use entity::orders::Model;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,5 +84,17 @@ impl OrderFormatter {
             self.sender,
             receiver_form,
         );
+    }
+    pub fn from_db_to_formatet(model: Model) -> OrderFormatter {
+        OrderFormatter {
+            time_started: model.timestart.to_string().parse::<i64>().unwrap(),
+            time_executed: model.timeendl.to_string().parse::<i64>().unwrap(),
+            token0: model.token0,
+            token1: model.token1,
+            amount0: model.token0amount as u64,
+            amount1: model.token1amount as u64,
+            sender: model.maker,
+            receiver: model.receiver,
+        }
     }
 }
