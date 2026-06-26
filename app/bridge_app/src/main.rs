@@ -10,10 +10,9 @@ pub mod types;
 use crate::handlers::users_routes;
 use crate::solana::utils;
 use crate::types::OrderFormatter;
-use axum::routing::get;
+use axum::routing::post;
 use dotenv::dotenv;
 use entity::orders;
-use tokio::net::TcpListener;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
@@ -21,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //local::run_solana_local_validator();
     tracing_subscriber::fmt::init();
     //let _ = bridge::run_bridge().await;
-    let app = axum::Router::new().route("/create_user", get(users_routes::create_user));
+    let app = axum::Router::new().route("/create_user", post(users_routes::create_user));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     //let listener = tokio::net::
     axum::serve(listener, app).await?;

@@ -1,4 +1,4 @@
-use std::process::{Child, Command};
+use std::process::Command;
 pub fn run_solana_local_validator() {
     let _ = Command::new("solana-test-validator")
         .current_dir("../../bridge/")

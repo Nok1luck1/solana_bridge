@@ -1,5 +1,4 @@
 use crate::db::database;
-use crate::entity;
 use crate::errors;
 use crate::eth;
 use crate::solana;
@@ -7,7 +6,6 @@ use crate::types;
 use crate::types::OrderFormatter;
 
 use anchor_lang::prelude::Pubkey;
-use dotenv::dotenv;
 use std::str::FromStr;
 use tokio::time::{timeout, Duration};
 

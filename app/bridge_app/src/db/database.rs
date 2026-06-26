@@ -1,9 +1,7 @@
-use crate::db::database;
 use crate::entity;
 use crate::orders;
 use crate::orders::Column;
 use crate::types::OrderFormatter;
-use bridge::order;
 use entity::orders::Entity as OrdersEntity;
 use sea_orm::EntityTrait;
 
