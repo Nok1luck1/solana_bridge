@@ -8,19 +8,49 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub fromevmtosol: bool,
-    pub maker: String,
-    pub receiver: String,
-    pub token0: String,
-    pub token1: String,
+    pub maker: i32,
+    pub receiver: i32,
+    pub token_relation_id: i32,
     pub token0amount: i64,
     pub token1amount: i64,
-    pub timestart: Decimal,
-    pub timeendl: Decimal,
-    pub tx_hash_solana: String,
-    pub tx_hash_evm: String,
+    pub timestart: i64,
+    pub timeendl: i64,
+    pub tx_hash_solana: Option<String>,
+    pub tx_hash_evm: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::token_relations::Entity",
+        from = "Column::TokenRelationId",
+        to = "super::token_relations::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    TokenRelations,
+    #[sea_orm(
+        belongs_to = "super::users::Entity",
+        from = "Column::Receiver",
+        to = "super::users::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    Users2,
+    #[sea_orm(
+        belongs_to = "super::users::Entity",
+        from = "Column::Maker",
+        to = "super::users::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    Users1,
+}
+
+impl Related<super::token_relations::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TokenRelations.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

@@ -90,3 +90,17 @@ pub async fn get_users_orders(limit: u64, offset: u64) -> Result<Vec<OrderFormat
         .collect();
     Ok(result)
 }
+// pub async fn get_user_orders(limit: u64, offset: u64) -> Result<Vec<OrderFormatter>, DbErr> {
+//     let database = connect_static_db().await;
+//     let orders = OrdersEntity::find()
+//         .order_by_asc(Column::Address)
+//         .offset(offset)
+//         .limit(limit)
+//         .all(database)
+//         .await?;
+//     let result: Vec<OrderFormatter> = orders
+//         .into_iter()
+//         .map(|order| OrderFormatter::from_db_to_formatet(order))
+//         .collect();
+//     Ok(result)
+// }//Add new table into database that will create users list

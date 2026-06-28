@@ -89,6 +89,24 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
+
+        manager
+            .create_table(
+                Table::create()
+                    .table(Users::Table)
+                    .if_not_exists()
+                    .col(
+                        ColumnDef::new(Users::Id)
+                            .integer()
+                            .not_null()
+                            .auto_increment()
+                            .primary_key(),
+                    )
+                    .col(ColumnDef::new(Users::AddressEvm).string().not_null())
+                    .col(ColumnDef::new(Users::AddressSolana).string().not_null())
+                    .to_owned(),
+            )
+            .await?;
         manager
             .create_table(
                 Table::create()
@@ -102,8 +120,20 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Orders::Fromevmtosol).boolean().not_null())
-                    .col(ColumnDef::new(Orders::Maker).string().not_null())
-                    .col(ColumnDef::new(Orders::Receiver).string().not_null())
+                    .col(ColumnDef::new(Orders::Maker).integer().not_null())
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("user_address_sender")
+                            .from(Orders::Table, Orders::Maker)
+                            .to(Users::Table, Users::Id),
+                    )
+                    .col(ColumnDef::new(Orders::Receiver).integer().not_null())
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("user_address_receiver")
+                            .from(Orders::Table, Orders::Receiver)
+                            .to(Users::Table, Users::Id),
+                    )
                     .col(ColumnDef::new(Orders::TokenRelationId).integer().not_null())
                     .col(
                         ColumnDef::new(Orders::Token0amount)
@@ -128,7 +158,6 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
-
         Ok(())
     }
 
@@ -147,7 +176,11 @@ impl MigrationTrait for Migration {
 
         manager
             .drop_table(Table::drop().table(SolanaTokens::Table).to_owned())
-            .await
+            .await?;
+        manager
+            .drop_table(Table::drop().table(Users::Table).to_owned())
+            .await?;
+        Ok(())
     }
 }
 
@@ -165,6 +198,13 @@ enum Orders {
     Timeendl,
     TxHashSolana,
     TxHashEVM,
+}
+#[derive(DeriveIden)]
+enum Users {
+    Table,
+    Id,
+    AddressEvm,
+    AddressSolana,
 }
 
 #[derive(DeriveIden)]
