@@ -21,8 +21,6 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     EvmTokens,
-    #[sea_orm(has_many = "super::orders::Entity")]
-    Orders,
     #[sea_orm(
         belongs_to = "super::solana_tokens::Entity",
         from = "Column::SolanaTokenId",
@@ -36,12 +34,6 @@ pub enum Relation {
 impl Related<super::evm_tokens::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::EvmTokens.def()
-    }
-}
-
-impl Related<super::orders::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Orders.def()
     }
 }
 

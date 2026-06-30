@@ -93,8 +93,8 @@ impl OrderFormatter {
             token1: model.token1,
             amount0: model.token0amount as u64,
             amount1: model.token1amount as u64,
-            sender: model.maker,
-            receiver: model.receiver,
+            sender: model.maker.to_string(),
+            receiver: model.receiver.to_string(),
         }
     }
 }

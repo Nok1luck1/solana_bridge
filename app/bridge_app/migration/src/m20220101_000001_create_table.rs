@@ -134,7 +134,8 @@ impl MigrationTrait for Migration {
                             .from(Orders::Table, Orders::Receiver)
                             .to(Users::Table, Users::Id),
                     )
-                    .col(ColumnDef::new(Orders::TokenRelationId).integer().not_null())
+                    .col(ColumnDef::new(Orders::Token0).string().not_null())
+                    .col(ColumnDef::new(Orders::Token1).string().not_null())
                     .col(
                         ColumnDef::new(Orders::Token0amount)
                             .big_integer()
@@ -149,12 +150,6 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Orders::Timeendl).big_integer().not_null())
                     .col(ColumnDef::new(Orders::TxHashSolana).string())
                     .col(ColumnDef::new(Orders::TxHashEVM).string())
-                    .foreign_key(
-                        ForeignKey::create()
-                            .name("fk_orders_token_relation")
-                            .from(Orders::Table, Orders::TokenRelationId)
-                            .to(TokenRelations::Table, TokenRelations::Id),
-                    )
                     .to_owned(),
             )
             .await?;
@@ -191,7 +186,8 @@ enum Orders {
     Fromevmtosol,
     Maker,
     Receiver,
-    TokenRelationId,
+    Token0,
+    Token1,
     Token0amount,
     Token1amount,
     Timestart,

@@ -8,4 +8,6 @@ pub enum FormatError {
     MissingAttribute(String),
     #[error("Bridge has insufficient balance, has {has:?}, needed {neeed:?}")]
     BalanceError { has: String, neeed: String },
+    #[error("mismatch address user, has {has:?}, needed {must_have:?}")]
+    MismatchAddressInDb { has: String, must_have: String },
 }

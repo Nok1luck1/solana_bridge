@@ -23,6 +23,6 @@ pub async fn get_user_orders(
         .unwrap();
     return (StatusCode::OK, Json(user_orders));
 }
-pub async fn create_user(Json(payload): Json<CreateUser>) -> (StatusCode) {
+pub async fn create_user(Json(payload): Json<CreateUser>) -> StatusCode {
     return StatusCode::CREATED;
 }

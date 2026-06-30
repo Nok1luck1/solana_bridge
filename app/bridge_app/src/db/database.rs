@@ -1,17 +1,25 @@
 use crate::entity;
+use crate::entity::orders::Relation::Users1;
+use crate::entity::users;
+use crate::errors;
 use crate::orders;
 use crate::orders::Column;
 use crate::types::OrderFormatter;
+use alloy::primitives::Address;
+use anchor_lang::prelude::Pubkey;
 use entity::orders::Entity as OrdersEntity;
+use sea_orm::ColumnTrait;
 use sea_orm::EntityTrait;
 
 use sea_orm::IntoActiveModel;
+use sea_orm::QueryFilter;
 use sea_orm::QueryOrder;
 use sea_orm::QuerySelect;
 use sea_orm::{
     prelude::Decimal, ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set,
 };
 use tokio::sync::OnceCell;
+use yellowstone_grpc_proto::geyser::subscribe_request_filter_accounts_filter_memcmp::Data;
 
 static DB: OnceCell<DatabaseConnection> = OnceCell::const_new();
 
@@ -46,8 +54,8 @@ pub async fn create_order(
         token1: Set(token1),
         token0amount: Set(amount0),
         token1amount: Set(amount1),
-        timestart: Set(Decimal::from(timestart)),
-        timeendl: Set(Decimal::from(timeend)),
+        timestart: Set(timestart),
+        timeendl: Set(timeend),
         tx_hash_solana: ActiveValue::NotSet,
         tx_hash_evm: ActiveValue::NotSet,
         id: Set(id),
@@ -89,6 +97,33 @@ pub async fn get_users_orders(limit: u64, offset: u64) -> Result<Vec<OrderFormat
         .map(|order| OrderFormatter::from_db_to_formatet(order))
         .collect();
     Ok(result)
+}
+pub async fn get_user_id_by_address(
+    user_address_evm: Address,
+    user_address_sol: Pubkey,
+) -> Result<i64, thiserror::Error> {
+    let database = connect_static_db().await;
+
+    let evm_user = users::Entity::find()
+        .filter(users::Column::AddressEvm.eq(user_address_evm.to_string()))
+        .one(database)
+        .await?
+        .unwrap();
+
+    let solana_user = users::Entity::find()
+        .filter(users::Column::AddressSolana.eq(user_address_sol.to_string()))
+        .one(database)
+        .await?
+        .unwrap();
+
+    if evm_user.id != solana_user.id {
+        return errors::FormatError::MismatchAddressInDb {
+            has: (evm_user.address_evm),
+            must_have: (solana_user.address_solana),
+        };
+    }
+
+    Ok(evm_user.id as i64)
 }
 // pub async fn get_user_orders(limit: u64, offset: u64) -> Result<Vec<OrderFormatter>, DbErr> {
 //     let database = connect_static_db().await;

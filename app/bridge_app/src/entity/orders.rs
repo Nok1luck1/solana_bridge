@@ -10,7 +10,8 @@ pub struct Model {
     pub fromevmtosol: bool,
     pub maker: i32,
     pub receiver: i32,
-    pub token_relation_id: i32,
+    pub token0: String,
+    pub token1: String,
     pub token0amount: i64,
     pub token1amount: i64,
     pub timestart: i64,
@@ -21,14 +22,6 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::token_relations::Entity",
-        from = "Column::TokenRelationId",
-        to = "super::token_relations::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    TokenRelations,
     #[sea_orm(
         belongs_to = "super::users::Entity",
         from = "Column::Receiver",
@@ -45,12 +38,6 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     Users1,
-}
-
-impl Related<super::token_relations::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TokenRelations.def()
-    }
 }
 
 impl ActiveModelBehavior for ActiveModel {}
