@@ -46,10 +46,21 @@ pub async fn create_order(
     _hashevm: String,
 ) -> Result<(), DbErr> {
     let database = connect_static_db().await;
+    let (maker_id, receiver_id): (i32, i32) = if fromevm {
+        (
+            get_user_id_by_address_evm(maker).await? as i32,
+            get_user_id_by_address_solana(receiver).await? as i32,
+        )
+    } else {
+        (
+            get_user_id_by_address_solana(maker).await? as i32,
+            get_user_id_by_address_evm(receiver).await? as i32,
+        )
+    };
     let create_order = orders::ActiveModel {
         fromevmtosol: Set(fromevm),
-        maker: Set(maker),
-        receiver: Set(receiver),
+        maker: Set(maker_id),
+        receiver: Set(receiver_id),
         token0: Set(token0),
         token1: Set(token1),
         token0amount: Set(amount0),
@@ -68,7 +79,7 @@ pub async fn update_order_with_hash_evm(order_id: i32, hashevm: String) -> Resul
     let database = connect_static_db().await;
     if let Some(order) = OrdersEntity::find_by_id(order_id).one(database).await? {
         let mut active = order.into_active_model();
-        active.tx_hash_evm = Set(hashevm);
+        active.tx_hash_evm = Set(Some(hashevm));
         active.update(database).await?;
         println!("added hash evm for order {:?}", order_id);
     }
@@ -78,7 +89,7 @@ pub async fn update_order_with_hash_sol(order_id: i32, hashsolan: String) -> Res
     let database = connect_static_db().await;
     if let Some(order) = OrdersEntity::find_by_id(order_id).one(database).await? {
         let mut active = order.into_active_model();
-        active.tx_hash_solana = Set(hashsolan);
+        active.tx_hash_solana = Set(Some(hashsolan));
         active.update(database).await?;
         println!("added hash solana for order {:?}", order_id);
     }
@@ -98,32 +109,27 @@ pub async fn get_users_orders(limit: u64, offset: u64) -> Result<Vec<OrderFormat
         .collect();
     Ok(result)
 }
-pub async fn get_user_id_by_address(
-    user_address_evm: Address,
-    user_address_sol: Pubkey,
-) -> Result<i64, thiserror::Error> {
+pub async fn get_user_id_by_address_evm(user_address_evm: String) -> Result<i64, DbErr> {
     let database = connect_static_db().await;
 
     let evm_user = users::Entity::find()
-        .filter(users::Column::AddressEvm.eq(user_address_evm.to_string()))
+        .filter(users::Column::AddressEvm.eq(user_address_evm))
         .one(database)
         .await?
         .unwrap();
-
-    let solana_user = users::Entity::find()
-        .filter(users::Column::AddressSolana.eq(user_address_sol.to_string()))
-        .one(database)
-        .await?
-        .unwrap();
-
-    if evm_user.id != solana_user.id {
-        return errors::FormatError::MismatchAddressInDb {
-            has: (evm_user.address_evm),
-            must_have: (solana_user.address_solana),
-        };
-    }
 
     Ok(evm_user.id as i64)
+}
+pub async fn get_user_id_by_address_solana(user_address_sol: String) -> Result<i64, DbErr> {
+    let database = connect_static_db().await;
+
+    let solana_user = users::Entity::find()
+        .filter(users::Column::AddressEvm.eq(user_address_sol))
+        .one(database)
+        .await?
+        .unwrap();
+
+    Ok(solana_user.id as i64)
 }
 // pub async fn get_user_orders(limit: u64, offset: u64) -> Result<Vec<OrderFormatter>, DbErr> {
 //     let database = connect_static_db().await;
