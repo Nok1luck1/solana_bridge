@@ -10,10 +10,9 @@ use sea_orm::EntityTrait;
 use sea_orm::IntoActiveModel;
 use sea_orm::QueryFilter;
 use sea_orm::QuerySelect;
-use sea_orm::{
-    ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set,
-};
+use sea_orm::{ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set};
 use tokio::sync::OnceCell;
+use yellowstone_grpc_proto::tonic::Code::Ok;
 
 static DB: OnceCell<DatabaseConnection> = OnceCell::const_new();
 
@@ -145,17 +144,7 @@ pub async fn get_user_id_by_address_solana(user_address_sol: String) -> Result<i
 
     Ok(solana_user.id as i64)
 }
-// pub async fn get_user_orders(limit: u64, offset: u64) -> Result<Vec<OrderFormatter>, DbErr> {
-//     let database = connect_static_db().await;
-//     let orders = OrdersEntity::find()
-//         .order_by_asc(Column::Address)
-//         .offset(offset)
-//         .limit(limit)
-//         .all(database)
-//         .await?;
-//     let result: Vec<OrderFormatter> = orders
-//         .into_iter()
-//         .map(|order| OrderFormatter::from_db_to_formatet(order))
-//         .collect();
-//     Ok(result)
-// }//Add new table into database that will create users list
+// pub async fn get_all_evm_orders() -> Result<Vec<OrderFormatter>, DbErr> {
+
+//     Ok()
+// }
