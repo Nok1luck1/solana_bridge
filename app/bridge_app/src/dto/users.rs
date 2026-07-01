@@ -12,6 +12,8 @@ pub struct CreateUser {
 pub struct GetUser {
     pub address_sol: Pubkey,
     pub address_evm: Address,
+    pub maker: bool,
+    pub is_evm: bool,
     pub limit: u64,
     pub offset: u64,
 }

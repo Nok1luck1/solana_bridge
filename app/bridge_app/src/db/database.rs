@@ -1,25 +1,19 @@
 use crate::entity;
-use crate::entity::orders::Relation::Users1;
 use crate::entity::users;
-use crate::errors;
 use crate::orders;
 use crate::orders::Column;
 use crate::types::OrderFormatter;
-use alloy::primitives::Address;
-use anchor_lang::prelude::Pubkey;
 use entity::orders::Entity as OrdersEntity;
 use sea_orm::ColumnTrait;
 use sea_orm::EntityTrait;
 
 use sea_orm::IntoActiveModel;
 use sea_orm::QueryFilter;
-use sea_orm::QueryOrder;
 use sea_orm::QuerySelect;
 use sea_orm::{
-    prelude::Decimal, ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set,
+    ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set,
 };
 use tokio::sync::OnceCell;
-use yellowstone_grpc_proto::geyser::subscribe_request_filter_accounts_filter_memcmp::Data;
 
 static DB: OnceCell<DatabaseConnection> = OnceCell::const_new();
 
@@ -95,15 +89,35 @@ pub async fn update_order_with_hash_sol(order_id: i32, hashsolan: String) -> Res
     }
     Ok(())
 }
-pub async fn get_users_orders(limit: u64, offset: u64) -> Result<Vec<OrderFormatter>, DbErr> {
+pub async fn get_users_made_orders(
+    user_address: String,
+    in_evm: bool,
+    make_or_receive: bool,
+    limit: u64,
+    offset: u64,
+) -> Result<Vec<OrderFormatter>, DbErr> {
     let database = connect_static_db().await;
-    let orders = OrdersEntity::find()
-        .order_by_asc(Column::Id)
-        .offset(offset)
-        .limit(limit)
-        .all(database)
-        .await?;
-    let result: Vec<OrderFormatter> = orders
+    let get_user_id: i64 = if in_evm {
+        get_user_id_by_address_evm(user_address).await?
+    } else {
+        get_user_id_by_address_solana(user_address).await?
+    };
+    let orders_by_type = if make_or_receive {
+        OrdersEntity::find()
+            .filter(Column::Maker.eq(get_user_id))
+            .offset(offset)
+            .limit(limit)
+            .all(database)
+            .await?
+    } else {
+        OrdersEntity::find()
+            .filter(Column::Receiver.eq(get_user_id))
+            .offset(offset)
+            .limit(limit)
+            .all(database)
+            .await?
+    };
+    let result: Vec<OrderFormatter> = orders_by_type
         .into_iter()
         .map(|order| OrderFormatter::from_db_to_formatet(order))
         .collect();
