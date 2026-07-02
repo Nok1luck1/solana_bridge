@@ -34,7 +34,6 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 println!("{:?} Order EVM gettet", struct_order);
                 let _save_order_in_db = database::create_order(
-                    order_id.to::<i32>(),
                     true,
                     struct_order.sender.clone(),
                     struct_order.receiver.clone(),
@@ -92,7 +91,6 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Error in parsing order");
                     }
                     database::create_order(
-                        order_id.1.counter.clone().try_into().unwrap(),
                         false,
                         verify_order.1.sender.clone(),
                         verify_order.1.receiver.clone(),

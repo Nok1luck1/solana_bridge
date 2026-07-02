@@ -1,9 +1,11 @@
+use crate::db::database;
 use crate::entity;
 use crate::entity::users;
 use crate::orders;
 use crate::orders::Column;
 use crate::types::OrderFormatter;
 use entity::orders::Entity as OrdersEntity;
+use sea_orm::ActiveValue::NotSet;
 use sea_orm::ColumnTrait;
 use sea_orm::EntityTrait;
 
@@ -12,7 +14,6 @@ use sea_orm::QueryFilter;
 use sea_orm::QuerySelect;
 use sea_orm::{ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set};
 use tokio::sync::OnceCell;
-use yellowstone_grpc_proto::tonic::Code::Ok;
 
 static DB: OnceCell<DatabaseConnection> = OnceCell::const_new();
 
@@ -25,7 +26,6 @@ pub async fn connect_static_db() -> &'static DatabaseConnection {
     .await
 }
 pub async fn create_order(
-    id: i32,
     fromevm: bool,
     maker: String,
     receiver: String,
@@ -51,6 +51,7 @@ pub async fn create_order(
         )
     };
     let create_order = orders::ActiveModel {
+        id: NotSet,
         fromevmtosol: Set(fromevm),
         maker: Set(maker_id),
         receiver: Set(receiver_id),
@@ -62,10 +63,18 @@ pub async fn create_order(
         timeendl: Set(timeend),
         tx_hash_solana: ActiveValue::NotSet,
         tx_hash_evm: ActiveValue::NotSet,
-        id: Set(id),
     };
     let check = create_order.insert(database).await?;
     println!("Inserted: {:?}", check);
+    Ok(())
+}
+pub async fn create_user(address_evm: String, address_sol: String) -> Result<(), DbErr> {
+    let _create_user = users::ActiveModel {
+        id: NotSet,
+        address_evm: Set(address_evm),
+        address_solana: Set(address_sol),
+        blocked: Set(false),
+    };
     Ok(())
 }
 pub async fn update_order_with_hash_evm(order_id: i32, hashevm: String) -> Result<(), DbErr> {
@@ -84,7 +93,7 @@ pub async fn update_order_with_hash_sol(order_id: i32, hashsolan: String) -> Res
         let mut active = order.into_active_model();
         active.tx_hash_solana = Set(Some(hashsolan));
         active.update(database).await?;
-        println!("added hash solana for order {:?}", order_id);
+        println!("added hash solana for order {:?}", &order_id);
     }
     Ok(())
 }
@@ -125,26 +134,57 @@ pub async fn get_users_made_orders(
 pub async fn get_user_id_by_address_evm(user_address_evm: String) -> Result<i64, DbErr> {
     let database = connect_static_db().await;
 
-    let evm_user = users::Entity::find()
+    let evm_user_id = users::Entity::find()
         .filter(users::Column::AddressEvm.eq(user_address_evm))
         .one(database)
         .await?
-        .unwrap();
+        .unwrap()
+        .id as i64;
 
-    Ok(evm_user.id as i64)
+    Ok(evm_user_id)
 }
 pub async fn get_user_id_by_address_solana(user_address_sol: String) -> Result<i64, DbErr> {
     let database = connect_static_db().await;
 
-    let solana_user = users::Entity::find()
+    let solana_user_id = users::Entity::find()
         .filter(users::Column::AddressEvm.eq(user_address_sol))
         .one(database)
         .await?
-        .unwrap();
+        .unwrap()
+        .id as i64;
 
-    Ok(solana_user.id as i64)
+    Ok(solana_user_id)
 }
-// pub async fn get_all_evm_orders() -> Result<Vec<OrderFormatter>, DbErr> {
-
-//     Ok()
-// }
+pub async fn check_blocked(user_id: u64) -> Result<bool, DbErr> {
+    let database = connect_static_db().await;
+    let blocked = users::Entity::find()
+        .filter(users::Column::Id.eq(user_id))
+        .one(database)
+        .await?
+        .unwrap()
+        .blocked;
+    Ok(blocked)
+}
+pub async fn block_user(user_id: u64) -> Result<users::Model, DbErr> {
+    let database = connect_static_db().await;
+    if let Some(user) = users::Entity::find_by_id(user_id as i32)
+        .one(database)
+        .await?
+    {
+        let mut active = user.into_active_model();
+        active.blocked = Set(false);
+        let updated_user = active.update(database).await?;
+        Ok(updated_user)
+    } else {
+        Err(DbErr::RecordNotFound(format!("User {} not found", user_id)))
+    }
+}
+pub async fn get_spicific_order(order_id: i32) -> Result<orders::Model, DbErr> {
+    let database = connect_static_db().await;
+    let order = orders::Entity::find()
+        .filter(orders::Column::Id.eq(order_id))
+        .one(database)
+        .await?
+        .unwrap();
+    Ok(order)
+}

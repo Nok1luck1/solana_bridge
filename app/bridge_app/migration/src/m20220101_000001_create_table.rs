@@ -104,6 +104,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Users::AddressEvm).string().not_null())
                     .col(ColumnDef::new(Users::AddressSolana).string().not_null())
+                    .col(ColumnDef::new(Users::Blocked).boolean().not_null())
                     .to_owned(),
             )
             .await?;
@@ -201,6 +202,7 @@ enum Users {
     Id,
     AddressEvm,
     AddressSolana,
+    Blocked,
 }
 
 #[derive(DeriveIden)]

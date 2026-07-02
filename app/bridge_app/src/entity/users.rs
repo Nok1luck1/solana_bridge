@@ -9,6 +9,7 @@ pub struct Model {
     pub id: i32,
     pub address_evm: String,
     pub address_solana: String,
+    pub blocked: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
