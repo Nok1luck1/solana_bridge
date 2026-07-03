@@ -12,6 +12,7 @@ use crate::dto::admin::GetOrder;
 use crate::handlers::{admin_routes, users_routes};
 use crate::solana::utils;
 use crate::types::OrderFormatter;
+use axum::http::HeaderValue;
 use axum::routing::{get, post};
 use axum::Json;
 use dotenv::dotenv;
@@ -25,8 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt::init();
     //let _ = bridge::run_bridge().await;
     let app = axum::Router::new()
-        .route("/create_user", post(users_routes::create_user))
-        .route("/sdbs", get(users_routes::get_user_orders))
+        //.layer(CorsLayer::new().allow_origin("pizda_jopa".parse::<HeaderValue>().unwrap()))
         .route(
             "/get_specific_order",
             post(admin_routes::get_spicific_order),

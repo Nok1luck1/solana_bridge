@@ -6,13 +6,11 @@ use crate::db::database;
 use crate::dto::users::{CreateUser, GetUserOrders};
 use crate::types::OrderFormatter;
 
-pub async fn orders_sol() -> Json<Vec<Order>> {
-    let orders = Vec::new();
-    return Json(orders);
+pub async fn get_all_orders_sol() -> Json<Vec<OrderFormatter>> {
+    Json(database::get_all_solana_order(50, 50).await.unwrap())
 }
-pub async fn orders_evm() -> Json<Vec<Order>> {
-    let orders = Vec::new();
-    return Json(orders);
+pub async fn get_all_orders_evm() -> Json<Vec<OrderFormatter>> {
+    Json(database::get_all_evm_order(50, 50).await.unwrap())
 }
 pub async fn get_user_orders(
     Json(payload): Json<GetUserOrders>,

@@ -1,3 +1,6 @@
+use std::os::unix::raw::off_t;
+use std::ptr::eq;
+
 use crate::db::database;
 use crate::entity;
 use crate::entity::users;
@@ -133,7 +136,6 @@ pub async fn get_users_made_orders(
 }
 pub async fn get_user_id_by_address_evm(user_address_evm: String) -> Result<i64, DbErr> {
     let database = connect_static_db().await;
-
     let evm_user_id = users::Entity::find()
         .filter(users::Column::AddressEvm.eq(user_address_evm))
         .one(database)
@@ -145,7 +147,6 @@ pub async fn get_user_id_by_address_evm(user_address_evm: String) -> Result<i64,
 }
 pub async fn get_user_id_by_address_solana(user_address_sol: String) -> Result<i64, DbErr> {
     let database = connect_static_db().await;
-
     let solana_user_id = users::Entity::find()
         .filter(users::Column::AddressEvm.eq(user_address_sol))
         .one(database)
@@ -187,4 +188,30 @@ pub async fn get_spicific_order(order_id: i32) -> Result<orders::Model, DbErr> {
         .await?
         .unwrap();
     Ok(order)
+}
+pub async fn get_all_evm_order(offset: u64, limit: u64) -> Result<Vec<OrderFormatter>, DbErr> {
+    let database = connect_static_db().await;
+    let orders = OrdersEntity::find()
+        .filter(orders::Column::Fromevmtosol.eq(true))
+        .offset(offset)
+        .limit(limit)
+        .all(database)
+        .await?
+        .into_iter()
+        .map(|orders| OrderFormatter::from_db_to_formatet(orders))
+        .collect();
+    Ok(orders)
+}
+pub async fn get_all_solana_order(offset: u64, limit: u64) -> Result<Vec<OrderFormatter>, DbErr> {
+    let database = connect_static_db().await;
+    let orders = OrdersEntity::find()
+        .filter(orders::Column::Fromevmtosol.eq(false))
+        .offset(offset)
+        .limit(limit)
+        .all(database)
+        .await?
+        .into_iter()
+        .map(|orders| OrderFormatter::from_db_to_formatet(orders))
+        .collect();
+    Ok(orders)
 }

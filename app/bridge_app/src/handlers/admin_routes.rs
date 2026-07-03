@@ -9,8 +9,6 @@ use crate::eth;
 use crate::solana;
 use crate::types::OrderFormatter;
 
-pub async fn get_orders_admin() {}
-
 pub async fn force_execute_evm() {}
 pub async fn force_execute_sol() {}
 

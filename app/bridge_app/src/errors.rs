@@ -1,3 +1,10 @@
+use anchor_client::solana_sdk::message;
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
+use serde_json::json;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -10,4 +17,21 @@ pub enum FormatError {
     BalanceError { has: String, neeed: String },
     #[error("mismatch address user, has {has:?}, needed {must_have:?}")]
     MismatchAddressInDb { has: String, must_have: String },
+}
+impl IntoResponse for FormatError {
+    fn into_response(self) -> axum::response::Response {
+        let (status, message) = match &self {
+            FormatError::BalanceError { has: _, neeed: _ } => (StatusCode::UPGRADE_REQUIRED, ""),
+            FormatError::MismatchAddressInDb {
+                has: _,
+                must_have: _,
+            } => (StatusCode::NOT_FOUND, "address in DB error"),
+            FormatError::InvalidHeader {
+                expected: _,
+                found: _,
+            } => (StatusCode::NOT_ACCEPTABLE, ""),
+            FormatError::MissingAttribute(_) => (StatusCode::UPGRADE_REQUIRED, ""),
+        };
+        (status, Json(json!({ "error": message }))).into_response()
+    }
 }
