@@ -9,8 +9,11 @@ use crate::types::OrderFormatter;
 pub async fn get_all_orders_sol() -> Json<Vec<OrderFormatter>> {
     Json(database::get_all_solana_order(50, 50).await.unwrap())
 }
-pub async fn get_all_orders_evm() -> Json<Vec<OrderFormatter>> {
-    Json(database::get_all_evm_order(50, 50).await.unwrap())
+pub async fn get_all_orders_evm() -> Json<(Vec<OrderFormatter>, StatusCode)> {
+    Json((
+        database::get_all_evm_order(50, 50).await.unwrap(),
+        StatusCode::OK,
+    ))
 }
 pub async fn get_user_orders(
     Json(payload): Json<GetUserOrders>,

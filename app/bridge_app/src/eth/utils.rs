@@ -106,6 +106,20 @@ pub async fn execute_order_evm(
 
     Ok(_distribute_tx.transaction_hash)
 }
+pub async fn check_is_admin(address_admin: String) -> Result<bool, Box<dyn Error>> {
+    let provider = connect_static_evm_provider().await;
+    let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
+    let contract_address = Address::from_str(addr.as_str());
+    let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
+    let is_admin: bool = bridge_contract
+        .hasRole(
+            FixedBytes::ZERO,
+            Address::from_str(address_admin.as_str()).unwrap(),
+        )
+        .call()
+        .await?;
+    Ok(is_admin)
+}
 pub async fn get_order_info(order_id: U256) -> Result<Bridge::Order, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");

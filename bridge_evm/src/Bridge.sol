@@ -19,6 +19,7 @@ contract Bridge is AccessControl {
 
     mapping(uint256 => Order) public orderByIndex;
     uint public chain_id;
+    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
     uint256 public currentOrderCounter;
     event OrderCreated(uint256 orderId);
     event OrderCanceled(uint256 orderId);

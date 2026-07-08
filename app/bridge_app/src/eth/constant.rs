@@ -36,6 +36,7 @@ sol! {
         event OrderExecuted(uint256 orderId);
         function balanceOf(address owner) public view returns (uint256);
         function allowance(address owner,address spender) public view returns(uint256);
+        function hasRole(bytes32 role, address admin) public view returns(bool);
         function getOrderInfo(uint256 orderID) public view returns(Order memory);
         function distributeReward(address receiver,string memory _token0,address token1,string memory sender,uint256 amount0,uint256 amount1) public returns (uint256 orderId);
    }

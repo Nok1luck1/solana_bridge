@@ -3,6 +3,7 @@ use anchor_client::solana_sdk::signature::{read_keypair_file, Keypair};
 use anchor_client::Client;
 use anchor_client::Cluster;
 use anchor_lang::prelude::Pubkey;
+use anchor_lang::AnchorSerialize;
 use anchor_spl::associated_token::{self, get_associated_token_address};
 use anchor_spl::token::TokenAccount;
 use anyhow::Ok;
@@ -43,6 +44,12 @@ pub async fn get_admin_config() -> Result<(Pubkey, AdminConfig), anyhow::Error> 
         admin_config_account.admins, admin_config_account.settet
     );
     Ok((admin_config_pda, admin_config_account))
+}
+pub async fn check_exist_admin(is_admin: String) -> Result<bool, anyhow::Error> {
+    let (_, admin_config) = get_admin_config().await?;
+    Ok(admin_config
+        .admins
+        .contains(&Pubkey::from_str_const(&is_admin)))
 }
 pub async fn get_specific_order(
     user: Pubkey,
