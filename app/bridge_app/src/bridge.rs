@@ -1,5 +1,6 @@
 use crate::db::database;
 use crate::errors;
+use crate::errors::FormatError;
 use crate::eth;
 use crate::solana;
 use crate::types;
@@ -99,7 +100,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                         order_id.1.counter,
                     )
                     .await
-                    .unwrap();
+                    .expect(FormatError::ParseError);
                     if verify_order.1.time_started != order.time_started {
                         println!("Error in parsing order");
                     }
@@ -109,11 +110,19 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                         verify_order.1.receiver.clone(),
                         verify_order.1.token0.clone(),
                         verify_order.1.token1.clone(),
-                        verify_order.1.amount0.try_into().unwrap(),
-                        verify_order.1.amount1.try_into().unwrap(),
+                        verify_order
+                            .1
+                            .amount0
+                            .try_into()
+                            .expect(FormatError::ParseError),
+                        verify_order
+                            .1
+                            .amount1
+                            .try_into()
+                            .expect(FormatError::ParseError),
                         verify_order.1.time_started,
                         0,
-                        String::from_utf8(order_pda).unwrap(),
+                        String::from_utf8(order_pda).expect(FormatError::ParseError),
                         "_".to_string(),
                     )
                     .await?;
@@ -138,7 +147,12 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                     .await?;
                     println!("{execute:?}");
                     database::update_order_with_hash_evm(
-                        order_id.1.counter.clone().try_into().unwrap(),
+                        order_id
+                            .1
+                            .counter
+                            .clone()
+                            .try_into()
+                            .expect(FormatError::OrderError),
                         execute.to_string(),
                     )
                     .await?;

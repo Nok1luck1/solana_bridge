@@ -19,11 +19,17 @@ pub async fn execute_order(
     amount1: i64,
     sender: String,
     receiver: Pubkey,
-) -> Result<Signature , anyhow::Error> {
-    let admin_keypair: Keypair =
-        Keypair::from_base58_string(std::env::var("ADMIN_KEYPAIR").unwrap().as_str());
+) -> Result<Signature, anyhow::Error> {
+    let admin_keypair: Keypair = Keypair::from_base58_string(
+        std::env::var("ADMIN_KEYPAIR")
+            .expect(FormatError::ParseError)
+            .as_str(),
+    );
     let program = get_solana_provider();
-    let timeend = SystemTime::now().elapsed().unwrap().as_secs() as i64;
+    let timeend = SystemTime::now()
+        .elapsed()
+        .expect(FormatError::ParseError)
+        .as_secs() as i64;
     let (order_id_pda, order_id) = utils::get_current_order_id().await?;
     let (admin_config_pda, _admin_config) = utils::get_admin_config().await?;
     let (order_execution, _bump_exec) = Pubkey::find_program_address(
@@ -62,5 +68,5 @@ pub async fn execute_order(
         .signer(admin_keypair)
         .send()
         .await?;
-    Ok(_send_transaction )
+    Ok(_send_transaction)
 }

@@ -58,8 +58,8 @@ impl OrderFormatter {
         }
     }
     pub fn format_for_evm(self) -> (Address, String, Address, String, u64, U256) {
-        let receiver_form = Address::from_str(&self.receiver).unwrap();
-        let token_form = Address::from_str(&self.token0).unwrap();
+        let receiver_form = Address::from_str(&self.receiver).expect(FormatError::ParseError);
+        let token_form = Address::from_str(&self.token0).expect(FormatError::ParseError);
         let amount1 = U256::from(self.amount1);
         return (
             receiver_form,
@@ -71,8 +71,8 @@ impl OrderFormatter {
         );
     }
     pub fn format_for_solana(self) -> (i64, i64, Pubkey, String, i64, i64, String, Pubkey) {
-        let receiver_form = Pubkey::from_str(&self.receiver).unwrap();
-        let token_form = Pubkey::from_str(&self.token0).unwrap();
+        let receiver_form = Pubkey::from_str(&self.receiver).expect(FormatError::ParseError);
+        let token_form = Pubkey::from_str(&self.token0).expect(FormatError::ParseError);
 
         return (
             self.time_started,
@@ -87,8 +87,16 @@ impl OrderFormatter {
     }
     pub fn from_db_to_formatet(model: Model) -> OrderFormatter {
         OrderFormatter {
-            time_started: model.timestart.to_string().parse::<i64>().unwrap(),
-            time_executed: model.timeendl.to_string().parse::<i64>().unwrap(),
+            time_started: model
+                .timestart
+                .to_string()
+                .parse::<i64>()
+                .expect(FormatError::ParseError),
+            time_executed: model
+                .timeendl
+                .to_string()
+                .parse::<i64>()
+                .expect(FormatError::ParseError),
             token0: model.token0,
             token1: model.token1,
             amount0: model.token0amount as u64,

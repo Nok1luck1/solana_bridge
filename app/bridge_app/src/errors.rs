@@ -17,6 +17,20 @@ pub enum FormatError {
     BalanceError { has: String, neeed: String },
     #[error("mismatch address user, has {has:?}, needed {must_have:?}")]
     MismatchAddressInDb { has: String, must_have: String },
+    #[error("Parse error")]
+    ParseError,
+    #[error("Order Error")]
+    OrderError,
+    #[error("App error")]
+    AppError,
+    #[error("DatabaseError")]
+    DBError,
+    #[error("Scanner error")]
+    ScanError,
+    #[error("Blockchain call errror")]
+    BlockchainError,
+    #[error("Decoder Error")]
+    DecoderError,
 }
 impl IntoResponse for FormatError {
     fn into_response(self) -> axum::response::Response {
@@ -31,6 +45,12 @@ impl IntoResponse for FormatError {
                 found: _,
             } => (StatusCode::NOT_ACCEPTABLE, ""),
             FormatError::MissingAttribute(_) => (StatusCode::UPGRADE_REQUIRED, ""),
+            FormatError::ParseError(_) => (StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS, ""),
+            FormatError::OrderError(_) => (StatusCode::CONFLICT, ""),
+            FormatError::DBError(_) => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::ScanError(_) => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::BlockchainError(_) => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::DecoderError(_) => (StatusCode::INTERNAL_SERVER_ERROR, ""),
         };
         (status, Json(json!({ "error": message }))).into_response()
     }

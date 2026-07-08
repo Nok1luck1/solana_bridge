@@ -16,9 +16,12 @@ static SOLANA_CLIENT: OnceCell<anchor_client::Program<Arc<Keypair>>> = OnceCell:
 pub async fn get_solana_provider() -> &'static anchor_client::Program<Arc<Keypair>> {
     SOLANA_CLIENT
         .get_or_init(|| async {
-            let _payer = read_keypair_file("../../../bridge/tests/keys/admin1.json").unwrap();
+            let _payer = read_keypair_file("../../../bridge/tests/keys/admin1.json")
+                .expect(FormatError::ParseError);
             let _client = Client::new(Cluster::Localnet, Arc::new(_payer));
-            _client.program(bridge::ID).unwrap()
+            _client
+                .program(bridge::ID)
+                .expect(FormatError::BlockchainError)
         })
         .await
 }

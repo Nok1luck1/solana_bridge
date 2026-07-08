@@ -31,7 +31,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/get_specific_order",
             post(admin_routes::get_spicific_order),
         );
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+        .await
+        .expect(FormatError::AppError);
     axum::serve(listener, app).await?;
     Ok(())
 }

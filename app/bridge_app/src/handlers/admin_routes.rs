@@ -24,12 +24,14 @@ pub async fn get_spicific_order(
 pub async fn get_reserves_evm(Json(payload): Json<GetReservesEvm>) -> (StatusCode, i64) {
     let token_reserves = eth::check_balance(payload.address_asset)
         .await
-        .unwrap()
+        .expect(FormatError::BlockchainError)
         .to::<i64>();
     (StatusCode::FOUND, token_reserves)
 }
 pub async fn get_reserves_sol(Json(payload): Json<GetReservesSol>) -> (StatusCode, i64) {
-    let token_mint_reserves = solana::get_vault_balance(payload.mint).await.unwrap();
+    let token_mint_reserves = solana::get_vault_balance(payload.mint)
+        .await
+        .expect(FormatError::BlockchainError);
     (StatusCode::FOUND, token_mint_reserves as i64)
 }
 
@@ -37,13 +39,15 @@ pub async fn block_user(Json(payload): Json<BlockUser>) -> (StatusCode, Json<Use
     let user_id: i64 = if payload.is_evm {
         database::get_user_id_by_address_evm(payload.address)
             .await
-            .unwrap()
+            .expect(FormatError::BlockchainError)
     } else {
         database::get_user_id_by_address_solana(payload.address)
             .await
-            .unwrap()
+            .expect(FormatError::BlockchainError)
     };
-    let result = database::block_user(user_id as u64).await.unwrap();
+    let result = database::block_user(user_id as u64)
+        .await
+        .expect(FormatError::DatabaseError);
     let blocked_user = User {
         id: user_id,
         address_sol: result.address_solana,

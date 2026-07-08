@@ -1,3 +1,4 @@
+use crate::errors::FormatError;
 use crate::eth::Bridge;
 use crate::eth::ERC20;
 use alloy::primitives::FixedBytes;
@@ -73,7 +74,10 @@ pub async fn check_balance(token_addr: Address) -> Result<U256, Box<dyn Error>> 
     let token = ERC20::new(token_addr, provider);
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
-    let bridge_balance = token.balanceOf(contract_address.unwrap()).call().await?;
+    let bridge_balance = token
+        .balanceOf(contract_address.expect(FormatError::BlockchainError))
+        .call()
+        .await?;
     Ok(bridge_balance)
 }
 
@@ -86,9 +90,12 @@ pub async fn execute_order_evm(
     amount_to_distribute: U256,
 ) -> Result<FixedBytes<32>, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
-    let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
+    let addr = std::env::var("BRIDGE_EVM_ADDR").expect(FormatError::ParseError);
     let contract_address = Address::from_str(addr.as_str());
-    let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
+    let bridge_contract = Bridge::new(
+        contract_address.expect(FormatError::BlockchainError),
+        &provider,
+    );
     let current_available_balance: U256 = check_balance(token_to_distribute).await?;
     if current_available_balance < amount_to_distribute {
         error!("Bridge does not have specific amount to distribute");
@@ -109,12 +116,12 @@ pub async fn execute_order_evm(
 pub async fn check_is_admin(address_admin: String) -> Result<bool, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
-    let contract_address = Address::from_str(addr.as_str());
-    let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
+    let contract_address = Address::from_str(addr.as_str())?;
+    let bridge_contract = Bridge::new(contract_address, &provider);
     let is_admin: bool = bridge_contract
         .hasRole(
             FixedBytes::ZERO,
-            Address::from_str(address_admin.as_str()).unwrap(),
+            Address::from_str(address_admin.as_str()).expect(FormatError::BlockchainError),
         )
         .call()
         .await?;
@@ -124,7 +131,10 @@ pub async fn get_order_info(order_id: U256) -> Result<Bridge::Order, Box<dyn Err
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
-    let bridge_contract = Bridge::new(contract_address.unwrap(), &provider);
+    let bridge_contract = Bridge::new(
+        contract_address.expect(FormatError::BlockchainError),
+        &provider,
+    );
     let order_info: Bridge::Order = bridge_contract.getOrderInfo(order_id.into()).call().await?;
     println!("getInfo about order {order_id}");
     Ok(order_info)
