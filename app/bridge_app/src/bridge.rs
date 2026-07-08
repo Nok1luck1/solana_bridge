@@ -21,14 +21,25 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         match timeout(Duration::from_secs(evm_interval), eth::scan_for_orders()).await {
             Ok(Ok(Some((order_id, tx_hash)))) => {
-                let result_order = eth::get_order_info(order_id).await.unwrap();
+                let result_order = eth::get_order_info(order_id)
+                    .await
+                    .expect("Order Info EVM missing");
                 let struct_order: OrderFormatter = types::OrderFormatter::new(
-                    result_order.timestamp.try_into().unwrap(),
+                    result_order
+                        .timestamp
+                        .try_into()
+                        .expect("timestamp missing"),
                     0,
                     result_order.token0.to_string(),
                     result_order.token1.to_string(),
-                    result_order.amount0.try_into().unwrap(),
-                    result_order.amount1.try_into().unwrap(),
+                    result_order
+                        .amount0
+                        .try_into()
+                        .expect("amount0 evm missing"),
+                    result_order
+                        .amount1
+                        .try_into()
+                        .expect("amount1 evm missing"),
                     result_order.maker.to_string(),
                     result_order.receiver.to_string(),
                 );
@@ -70,7 +81,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
         let solana_interval: u64 = std::env::var("SOLANA_INTERVAL")
             .unwrap_or("5".to_string())
             .parse()
-            .unwrap();
+            .expect("Default  solana interval missing");
 
         loop {
             match timeout(
@@ -80,9 +91,11 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
             .await
             {
                 Ok(Ok(Some((order, order_pda)))) => {
-                    let order_id = solana::get_current_order_id().await.unwrap();
+                    let order_id = solana::get_current_order_id()
+                        .await
+                        .expect("Solana order id missing");
                     let verify_order = solana::get_specific_order(
-                        Pubkey::from_str(order.sender.as_str()).expect("pidoras"),
+                        Pubkey::from_str(order.sender.as_str()).expect("Sender sol missing"),
                         order_id.1.counter,
                     )
                     .await
