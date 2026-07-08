@@ -45,12 +45,13 @@ impl IntoResponse for FormatError {
                 found: _,
             } => (StatusCode::NOT_ACCEPTABLE, ""),
             FormatError::MissingAttribute(_) => (StatusCode::UPGRADE_REQUIRED, ""),
-            FormatError::ParseError(_) => (StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS, ""),
-            FormatError::OrderError(_) => (StatusCode::CONFLICT, ""),
-            FormatError::DBError(_) => (StatusCode::INTERNAL_SERVER_ERROR, ""),
-            FormatError::ScanError(_) => (StatusCode::INTERNAL_SERVER_ERROR, ""),
-            FormatError::BlockchainError(_) => (StatusCode::INTERNAL_SERVER_ERROR, ""),
-            FormatError::DecoderError(_) => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::ParseError => (StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS, ""),
+            FormatError::OrderError => (StatusCode::CONFLICT, ""),
+            FormatError::DBError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::ScanError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::BlockchainError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::DecoderError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::AppError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
         };
         (status, Json(json!({ "error": message }))).into_response()
     }

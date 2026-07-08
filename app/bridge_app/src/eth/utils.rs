@@ -75,7 +75,7 @@ pub async fn check_balance(token_addr: Address) -> Result<U256, Box<dyn Error>> 
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
     let bridge_balance = token
-        .balanceOf(contract_address.expect(FormatError::BlockchainError))
+        .balanceOf(contract_address.expect(&FormatError::BlockchainError.to_string()))
         .call()
         .await?;
     Ok(bridge_balance)
@@ -90,10 +90,10 @@ pub async fn execute_order_evm(
     amount_to_distribute: U256,
 ) -> Result<FixedBytes<32>, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
-    let addr = std::env::var("BRIDGE_EVM_ADDR").expect(FormatError::ParseError);
+    let addr = std::env::var("BRIDGE_EVM_ADDR").expect(&FormatError::ParseError.to_string());
     let contract_address = Address::from_str(addr.as_str());
     let bridge_contract = Bridge::new(
-        contract_address.expect(FormatError::BlockchainError),
+        contract_address.expect(&FormatError::BlockchainError.to_string()),
         &provider,
     );
     let current_available_balance: U256 = check_balance(token_to_distribute).await?;
@@ -121,7 +121,8 @@ pub async fn check_is_admin(address_admin: String) -> Result<bool, Box<dyn Error
     let is_admin: bool = bridge_contract
         .hasRole(
             FixedBytes::ZERO,
-            Address::from_str(address_admin.as_str()).expect(FormatError::BlockchainError),
+            Address::from_str(address_admin.as_str())
+                .expect(&FormatError::BlockchainError.to_string()),
         )
         .call()
         .await?;
@@ -132,7 +133,7 @@ pub async fn get_order_info(order_id: U256) -> Result<Bridge::Order, Box<dyn Err
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
     let bridge_contract = Bridge::new(
-        contract_address.expect(FormatError::BlockchainError),
+        contract_address.expect(&FormatError::BlockchainError.to_string()),
         &provider,
     );
     let order_info: Bridge::Order = bridge_contract.getOrderInfo(order_id.into()).call().await?;

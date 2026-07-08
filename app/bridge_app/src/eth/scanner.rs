@@ -16,7 +16,8 @@ pub async fn scan_for_orders() -> Result<Option<(U256, FixedBytes<32>)>, Box<dyn
     let ws_connect = WsConnect::new(rpc_url);
     let provider = ProviderBuilder::new().connect_ws(ws_connect).await?;
     let contract_addr_env = std::env::var("BRIDGE_EVM_ADDR").expect("env bridge addr missing");
-    let contract = Address::from_str(&contract_addr_env.as_str()).expect(FormatError::ParseError);
+    let contract =
+        Address::from_str(&contract_addr_env.as_str()).expect(&FormatError::ParseError.to_string());
     let filter = Filter::new()
         .address(contract)
         .event("OrderCreated(U256)")
@@ -32,7 +33,9 @@ pub async fn scan_for_orders() -> Result<Option<(U256, FixedBytes<32>)>, Box<dyn
         ) {
             Ok(decoded) => {
                 let order_id: alloy::primitives::U256 = decoded.orderId;
-                let tx_hash = log.transaction_hash.expect(FormatError::ScanError);
+                let tx_hash = log
+                    .transaction_hash
+                    .expect(&FormatError::ScanError.to_string());
                 println!("Decoded OrderCreated:");
                 // println!("order_id: 0x{}", hex::encode(order_id));
                 // println!("tx_hash: 0x{}", hex::encode(tx_hash));

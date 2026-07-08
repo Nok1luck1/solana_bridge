@@ -17,8 +17,8 @@ pub fn decode(data: &[u8]) -> Option<(OrderFormatter, Vec<u8>)> {
     let disc = &data[..8];
     let payload = &data[8..];
     if disc == bridge::OrderCreated::DISCRIMINATOR {
-        let decoded =
-            bridge::OrderCreated::try_from_slice(payload).expect(FormatError::DecoderError);
+        let decoded = bridge::OrderCreated::try_from_slice(payload)
+            .expect(&FormatError::DecoderError.to_string());
         print!(
             "Decoded msg Order Created {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
             decoded.amount0,
@@ -42,8 +42,8 @@ pub fn decode(data: &[u8]) -> Option<(OrderFormatter, Vec<u8>)> {
         return Some((order, payload.to_vec()));
     }
     if disc == bridge::OrderCompleted::DISCRIMINATOR {
-        let decoded =
-            bridge::OrderCompleted::try_from_slice(payload).expect(FormatError::DecoderError);
+        let decoded = bridge::OrderCompleted::try_from_slice(payload)
+            .expect(&FormatError::DecoderError.to_string());
         print!(
             "Decoded msg Order Completed {:?},{:?},{:?},{:?},{:?},{:?},{:?}",
             decoded.amount0,
@@ -67,8 +67,8 @@ pub fn decode(data: &[u8]) -> Option<(OrderFormatter, Vec<u8>)> {
         return Some((order, payload.to_vec()));
     }
     if disc == bridge::OrderCancelled::DISCRIMINATOR {
-        let decoded =
-            bridge::OrderCancelled::try_from_slice(payload).expect(FormatError::DecoderError);
+        let decoded = bridge::OrderCancelled::try_from_slice(payload)
+            .expect(&FormatError::DecoderError.to_string());
         print!(
             "Decoded msg Order Canceled{:?},{:?},{:?},{:?},{:?},{:?}",
             decoded.amount0,

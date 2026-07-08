@@ -4,6 +4,7 @@ use std::ptr::eq;
 use crate::db::database;
 use crate::entity;
 use crate::entity::users;
+use crate::errors::FormatError;
 use crate::orders;
 use crate::orders::Column;
 use crate::types::OrderFormatter;
@@ -140,7 +141,7 @@ pub async fn get_user_id_by_address_evm(user_address_evm: String) -> Result<i64,
         .filter(users::Column::AddressEvm.eq(user_address_evm))
         .one(database)
         .await?
-        .expect(FormatError::DBError)
+        .expect(&FormatError::DBError.to_string())
         .id as i64;
 
     Ok(evm_user_id)
@@ -151,7 +152,7 @@ pub async fn get_user_id_by_address_solana(user_address_sol: String) -> Result<i
         .filter(users::Column::AddressEvm.eq(user_address_sol))
         .one(database)
         .await?
-        .expect(FormatError::DBError)
+        .expect(&FormatError::DBError.to_string())
         .id as i64;
 
     Ok(solana_user_id)
@@ -162,7 +163,7 @@ pub async fn check_blocked(user_id: u64) -> Result<bool, DbErr> {
         .filter(users::Column::Id.eq(user_id))
         .one(database)
         .await?
-        .expect(FormatError::DBError)
+        .expect(&FormatError::DBError.to_string())
         .blocked;
     Ok(blocked)
 }
@@ -186,7 +187,7 @@ pub async fn get_spicific_order(order_id: i32) -> Result<orders::Model, DbErr> {
         .filter(orders::Column::Id.eq(order_id))
         .one(database)
         .await?
-        .expect(FormatError::DBError);
+        .expect(&FormatError::DBError.to_string());
     Ok(order)
 }
 pub async fn get_all_evm_order(offset: u64, limit: u64) -> Result<Vec<OrderFormatter>, DbErr> {

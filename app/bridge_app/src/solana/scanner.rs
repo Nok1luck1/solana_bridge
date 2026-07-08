@@ -1,4 +1,4 @@
-use crate::{solana::decoder, types::OrderFormatter};
+use crate::{errors::FormatError, solana::decoder, types::OrderFormatter};
 
 use futures::{SinkExt, StreamExt};
 use yellowstone_grpc_client::GeyserGrpcClient;
@@ -45,7 +45,7 @@ pub async fn scan_for_order_sol(
                                             let check = decoder::decode(&raw_bytes);
                                             return Ok(check);
                                         }
-                                        Err(e) => println!("Base64 decode error: {}", e),
+                                        Err(e) => println!("{}", FormatError::DecoderError),
                                     }
                                 }
                             }

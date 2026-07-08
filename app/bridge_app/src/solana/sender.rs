@@ -1,3 +1,4 @@
+use crate::errors::FormatError;
 use crate::solana::get_solana_provider;
 use crate::utils;
 use anchor_client::solana_sdk::{
@@ -22,13 +23,13 @@ pub async fn execute_order(
 ) -> Result<Signature, anyhow::Error> {
     let admin_keypair: Keypair = Keypair::from_base58_string(
         std::env::var("ADMIN_KEYPAIR")
-            .expect(FormatError::ParseError)
+            .expect(&FormatError::ParseError.to_string())
             .as_str(),
     );
     let program = get_solana_provider();
     let timeend = SystemTime::now()
         .elapsed()
-        .expect(FormatError::ParseError)
+        .expect(&FormatError::ParseError.to_string())
         .as_secs() as i64;
     let (order_id_pda, order_id) = utils::get_current_order_id().await?;
     let (admin_config_pda, _admin_config) = utils::get_admin_config().await?;

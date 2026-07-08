@@ -100,7 +100,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                         order_id.1.counter,
                     )
                     .await
-                    .expect(FormatError::ParseError);
+                    .expect(&FormatError::ParseError.to_string());
                     if verify_order.1.time_started != order.time_started {
                         println!("Error in parsing order");
                     }
@@ -114,15 +114,15 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                             .1
                             .amount0
                             .try_into()
-                            .expect(FormatError::ParseError),
+                            .expect(&FormatError::ParseError.to_string()),
                         verify_order
                             .1
                             .amount1
                             .try_into()
-                            .expect(FormatError::ParseError),
+                            .expect(&FormatError::ParseError.to_string()),
                         verify_order.1.time_started,
                         0,
-                        String::from_utf8(order_pda).expect(FormatError::ParseError),
+                        String::from_utf8(order_pda).expect(&FormatError::ParseError.to_string()),
                         "_".to_string(),
                     )
                     .await?;
@@ -152,7 +152,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                             .counter
                             .clone()
                             .try_into()
-                            .expect(FormatError::OrderError),
+                            .expect(&FormatError::OrderError.to_string()),
                         execute.to_string(),
                     )
                     .await?;

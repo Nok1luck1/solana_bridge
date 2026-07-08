@@ -1,3 +1,4 @@
+use crate::errors::FormatError;
 use crate::OrderFormatter;
 use anchor_client::solana_sdk::signature::{read_keypair_file, Keypair};
 use anchor_client::Client;
@@ -17,11 +18,11 @@ pub async fn get_solana_provider() -> &'static anchor_client::Program<Arc<Keypai
     SOLANA_CLIENT
         .get_or_init(|| async {
             let _payer = read_keypair_file("../../../bridge/tests/keys/admin1.json")
-                .expect(FormatError::ParseError);
+                .expect(&FormatError::ParseError.to_string());
             let _client = Client::new(Cluster::Localnet, Arc::new(_payer));
             _client
                 .program(bridge::ID)
-                .expect(FormatError::BlockchainError)
+                .expect(&FormatError::BlockchainError.to_string())
         })
         .await
 }
@@ -29,23 +30,17 @@ pub async fn get_solana_provider() -> &'static anchor_client::Program<Arc<Keypai
 pub async fn get_current_order_id() -> Result<(Pubkey, OrderId), anyhow::Error> {
     let program = get_solana_provider();
     let (order_id_pda, _) = Pubkey::find_program_address(&[b"order_id"], &bridge::ID);
-    println!("{:?}", order_id_pda);
     let order_id_account: bridge::OrderId = program.await.account(order_id_pda).await?;
-    println!(
-        "{:?},{:?},order counter and bump",
-        order_id_account.counter, order_id_account.bump
-    );
     Ok((order_id_pda, order_id_account))
 }
 pub async fn get_admin_config() -> Result<(Pubkey, AdminConfig), anyhow::Error> {
     let program = get_solana_provider();
     let (admin_config_pda, _) = Pubkey::find_program_address(&[b"adminconfig"], &bridge::ID);
-    println!("{:?}", admin_config_pda);
-    let admin_config_account: bridge::AdminConfig = program.await.account(admin_config_pda).await?;
-    println!(
-        "{:?},{:?},admins and setttet",
-        admin_config_account.admins, admin_config_account.settet
-    );
+    let admin_config_account: bridge::AdminConfig = program
+        .await
+        .account(admin_config_pda)
+        .await
+        .expect(&FormatError::BlockchainError.to_string());
     Ok((admin_config_pda, admin_config_account))
 }
 pub async fn check_exist_admin(is_admin: String) -> Result<bool, anyhow::Error> {
@@ -63,12 +58,7 @@ pub async fn get_specific_order(
         &[b"order", user.as_ref(), &order_counter.to_le_bytes()],
         &bridge::ID,
     );
-    println!("{:?}", order_pda);
     let order_account: bridge::Order = program.await.account(order_pda).await?;
-    println!(
-        "{:?},{:?},{:?},",
-        order_account.id, order_account.maker, order_account.timestart
-    );
     let order_form = OrderFormatter::new(
         order_account.timestart,
         0,
