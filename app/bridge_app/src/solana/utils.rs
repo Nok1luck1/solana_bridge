@@ -1,10 +1,10 @@
+use crate::db::database;
 use crate::errors::FormatError;
 use crate::OrderFormatter;
 use anchor_client::solana_sdk::signature::{read_keypair_file, Keypair};
 use anchor_client::Client;
 use anchor_client::Cluster;
 use anchor_lang::prelude::Pubkey;
-use anchor_lang::AnchorSerialize;
 use anchor_spl::associated_token::{self, get_associated_token_address};
 use anchor_spl::token::TokenAccount;
 use anyhow::Ok;
@@ -82,6 +82,12 @@ pub async fn get_token_vault(
         &associated_token_account,
     );
     Ok(vault_account)
+}
+///if true auth completed (is_interacted,is_admin)
+pub async fn check_interactions_with_program(user: Pubkey) -> Result<(bool, bool), anyhow::Error> {
+    let user_exists = database::get_user_id_by_address_solana(user.to_string()).await? > 0;
+    let admin_exists = check_exist_admin(user.to_string()).await?;
+    Ok((user_exists, admin_exists))
 }
 //Getting ATA for user pubkey
 pub async fn get_user_ata(token_mint: Pubkey, user: Pubkey) -> Result<Pubkey, anyhow::Error> {

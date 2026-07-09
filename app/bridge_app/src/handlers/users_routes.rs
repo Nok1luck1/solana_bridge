@@ -4,7 +4,6 @@ use crate::errors::FormatError;
 use crate::types::OrderFormatter;
 use axum::http::StatusCode;
 use axum::Json;
-use bridge::Order;
 
 pub async fn get_all_orders_sol() -> Json<Vec<OrderFormatter>> {
     Json(

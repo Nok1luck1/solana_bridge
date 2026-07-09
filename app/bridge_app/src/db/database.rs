@@ -1,7 +1,4 @@
-use std::os::unix::raw::off_t;
-use std::ptr::eq;
 
-use crate::db::database;
 use crate::entity;
 use crate::entity::users;
 use crate::errors::FormatError;

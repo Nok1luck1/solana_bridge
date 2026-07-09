@@ -45,7 +45,7 @@ pub async fn scan_for_order_sol(
                                             let check = decoder::decode(&raw_bytes);
                                             return Ok(check);
                                         }
-                                        Err(e) => println!("{}", FormatError::DecoderError),
+                                        Err(_e) => println!("{}", FormatError::DecoderError),
                                     }
                                 }
                             }

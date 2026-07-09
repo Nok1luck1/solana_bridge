@@ -5,8 +5,6 @@ use crate::errors::FormatError;
 use crate::eth;
 use crate::solana;
 use crate::types::OrderFormatter;
-use alloy::primitives::Address;
-use anchor_lang::prelude::Pubkey;
 use axum::{http::StatusCode, Json};
 
 pub async fn force_execute_evm() {}
