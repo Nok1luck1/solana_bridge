@@ -1,4 +1,4 @@
-
+use crate::db::database;
 use crate::entity;
 use crate::entity::users;
 use crate::errors::FormatError;
@@ -69,13 +69,44 @@ pub async fn create_order(
     println!("Inserted: {:?}", check);
     Ok(())
 }
-pub async fn create_user(address_evm: String, address_sol: String) -> Result<(), DbErr> {
-    let _create_user = users::ActiveModel {
-        id: NotSet,
-        address_evm: Set(address_evm),
-        address_solana: Set(address_sol),
-        blocked: Set(false),
-    };
+pub async fn create_user(address: String, is_evm: bool) -> Result<(), DbErr> {
+    if is_evm {
+        let _create_user = users::ActiveModel {
+            id: NotSet,
+            address_evm: Set(address),
+            address_solana: NotSet,
+            blocked: Set(false),
+        };
+    } else {
+        let _create_user = users::ActiveModel {
+            id: NotSet,
+            address_evm: NotSet,
+            address_solana: Set(address),
+            blocked: Set(false),
+        };
+    }
+
+    Ok(())
+}
+pub async fn update_user_address(
+    user_id: i64,
+    address_evm: String,
+    address_sol: String,
+) -> Result<(), DbErr> {
+    let database = connect_static_db().await;
+    if let Some(user) = users::Entity::find_by_id(user_id as i32)
+        .one(database)
+        .await?
+    {
+        let mut active = user.into_active_model();
+        active.address_evm = Set(address_evm);
+        active.address_solana = Set(address_sol);
+        active.update(database).await?;
+        println!(
+            "Updated User {:?},with evm {},and solana {} address",
+            user_id, address_evm, address_sol
+        );
+    }
     Ok(())
 }
 pub async fn update_order_with_hash_evm(order_id: i32, hashevm: String) -> Result<(), DbErr> {

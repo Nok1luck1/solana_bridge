@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct CreateUser {
-    pub address_sol: Pubkey,
-    pub address_evm: Address,
+    pub pub_key: String,
+    pub is_evm: bool,
 }
 
 #[derive(Deserialize)]

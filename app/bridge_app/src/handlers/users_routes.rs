@@ -35,11 +35,9 @@ pub async fn get_user_orders(
     return (StatusCode::OK, Json(user_orders));
 }
 pub async fn create_user(Json(_payload): Json<CreateUser>) -> StatusCode {
-    let _crt_user = database::create_user(
-        _payload.address_evm.to_string(),
-        _payload.address_sol.to_string(),
-    )
-    .await
-    .expect(&FormatError::DBError.to_string());
+    let _crt_user = database::create_user(_payload.pub_key.to_string(), _payload.is_evm)
+        .await
+        .expect(&FormatError::DBError.to_string());
+
     return StatusCode::CREATED;
 }
