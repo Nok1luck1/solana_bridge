@@ -6,7 +6,6 @@ use alloy::primitives::FixedBytes;
 use alloy::primitives::{Address, U256};
 use alloy::providers::{fillers::JoinFill, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
-use alloy::sol_types::sol_data::Address;
 use std::error::Error;
 use std::str::FromStr;
 use tokio::sync::OnceCell;
@@ -133,11 +132,12 @@ pub async fn check_is_admin(address_admin: String) -> Result<bool, Box<dyn Error
 pub async fn check_interactions_with_program(
     user_addr: Address,
 ) -> Result<(bool, bool), Box<dyn Error>> {
-    let is_user_exists = database::get_user_id_by_address_evm(user_addr.to_string()).await? > 0;
+    let pool = database::get_pool();
+    let is_user_exists = database::get_user_id_by_address_evm(&pool,user_addr.to_string()).await? > 0;
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
-    let bridge_contract = Bridge::new(
+    let _bridge_contract = Bridge::new(
         contract_address.expect(&FormatError::BlockchainError.to_string()),
         &provider,
     );

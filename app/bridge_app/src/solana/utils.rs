@@ -85,7 +85,8 @@ pub async fn get_token_vault(
 }
 ///if true auth completed (is_interacted,is_admin)
 pub async fn check_interactions_with_program(user: Pubkey) -> Result<(bool, bool), anyhow::Error> {
-    let user_exists = database::get_user_id_by_address_solana(user.to_string()).await? > 0;
+    let pool = database::get_pool();
+    let user_exists = database::get_user_id_by_address_solana(&pool,user.to_string()).await? > 0;
     let admin_exists = check_exist_admin(user.to_string()).await?;
     Ok((user_exists, admin_exists))
 }

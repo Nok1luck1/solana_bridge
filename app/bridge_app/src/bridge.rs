@@ -45,7 +45,9 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                     result_order.receiver.to_string(),
                 );
                 println!("{:?} Order EVM gettet", struct_order);
+                let pool = database::get_pool();
                 let _save_order_in_db = database::create_order(
+                    &pool,
                     true,
                     struct_order.sender.clone(),
                     struct_order.receiver.clone(),
@@ -64,6 +66,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                     solana::sender::execute_order(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
                         .await?;
                 database::update_order_with_hash_sol(
+                    &pool,
                     order_id.to::<i32>(),
                     execute_order_solana.to_string(),
                 )
@@ -92,6 +95,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
             .await
             {
                 Ok(Ok(Some((order, order_pda)))) => {
+                    let pool = database::get_pool();
                     let order_id = solana::get_current_order_id()
                         .await
                         .expect("Solana order id missing");
@@ -105,6 +109,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Error in parsing order");
                     }
                     database::create_order(
+                        &pool,
                         false,
                         verify_order.1.sender.clone(),
                         verify_order.1.receiver.clone(),
@@ -147,6 +152,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                     .await?;
                     println!("{execute:?}");
                     database::update_order_with_hash_evm(
+                        &pool,
                         order_id
                             .1
                             .counter

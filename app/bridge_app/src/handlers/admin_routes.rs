@@ -5,15 +5,20 @@ use crate::errors::FormatError;
 use crate::eth;
 use crate::solana;
 use crate::types::OrderFormatter;
-use axum::{http::StatusCode, Json};
+use axum::{extract::State, http::StatusCode, Json};
+use sea_orm::DatabaseConnection;
+use std::sync::Arc;
+
+type AppState = Arc<DatabaseConnection>;
 
 pub async fn force_execute_evm() {}
 pub async fn force_execute_sol() {}
 
 pub async fn get_spicific_order(
+    State(pool): State<AppState>,
     Json(payload): Json<GetOrder>,
 ) -> (StatusCode, Json<OrderFormatter>) {
-    let specific_order = database::get_spicific_order(payload.order_id as i32)
+    let specific_order = database::get_spicific_order(&pool, payload.order_id as i32)
         .await
         .expect("Cant get Specific order");
     let order = OrderFormatter::from_db_to_formatet(specific_order);
@@ -33,17 +38,20 @@ pub async fn get_reserves_sol(Json(payload): Json<GetReservesSol>) -> (StatusCod
     (StatusCode::FOUND, token_mint_reserves as i64)
 }
 
-pub async fn block_user(Json(payload): Json<BlockUser>) -> (StatusCode, Json<User>) {
+pub async fn block_user(
+    State(pool): State<AppState>,
+    Json(payload): Json<BlockUser>,
+) -> (StatusCode, Json<User>) {
     let user_id: i64 = if payload.is_evm {
-        database::get_user_id_by_address_evm(payload.address)
+        database::get_user_id_by_address_evm(&pool, payload.address)
             .await
             .expect(&FormatError::BlockchainError.to_string())
     } else {
-        database::get_user_id_by_address_solana(payload.address)
+        database::get_user_id_by_address_solana(&pool, payload.address)
             .await
             .expect(&FormatError::BlockchainError.to_string())
     };
-    let result = database::block_user(user_id as u64)
+    let result = database::block_user(&pool, user_id as u64)
         .await
         .expect(&FormatError::DBError.to_string());
     let blocked_user = User {
