@@ -1,3 +1,4 @@
+use anchor_spl::token_interface::spl_pod::error;
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde_json::json;
 use thiserror::Error;
@@ -30,6 +31,8 @@ pub enum FormatError {
     InitError,
     #[error("Redis connection pool error")]
     RedisError,
+    #[error("Already registed")]
+    RegistrationError,
 }
 impl IntoResponse for FormatError {
     fn into_response(self) -> axum::response::Response {
@@ -53,6 +56,7 @@ impl IntoResponse for FormatError {
             FormatError::AppError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
             FormatError::InitError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
             FormatError::RedisError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::RegistrationError => (StatusCode::METHOD_NOT_ALLOWED, ""),
         };
         (status, Json(json!({ "error": message }))).into_response()
     }

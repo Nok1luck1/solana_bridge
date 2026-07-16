@@ -21,11 +21,24 @@ pub struct LoginResponce {
     expiration: i64,
 }
 #[derive(Deserialize)]
-pub struct RegisterRequest {
+pub struct RegisterRequestEVM {
+    message: String,
+    signature: String,
     address: String,
+}
+#[derive(Deserialize)]
+pub struct RegisterRequestSOL {
+    message: String,
+    signature: String,
+    publicKey: String,
 }
 #[derive(Debug, Clone)]
 pub struct CurrentUser {
     id: i64,
     role: RoleType,
+}
+#[derive(Deserialize, Serialize)]
+pub struct RandomNonceReq {
+    address: String,
+    nonce: i64,
 }

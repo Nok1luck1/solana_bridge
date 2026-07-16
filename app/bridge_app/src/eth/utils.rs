@@ -5,6 +5,7 @@ use crate::eth::ERC20;
 use crate::state;
 use alloy::primitives::FixedBytes;
 use alloy::primitives::{Address, U256};
+use alloy::providers::Provider;
 use alloy::providers::{fillers::JoinFill, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
 use std::error::Error;
@@ -157,4 +158,8 @@ pub async fn get_order_info(order_id: U256) -> Result<Bridge::Order, Box<dyn Err
     let order_info: Bridge::Order = bridge_contract.getOrderInfo(order_id.into()).call().await?;
     println!("getInfo about order {order_id}");
     Ok(order_info)
+}
+pub async fn get_address_nonce(address:String)->Result<u64,Box<dyn Error>>{
+    let provider = connect_static_evm_provider().await;
+    let nonce = provider.get_transaction_count(Address::from_str(address.as_str())).pending().await?
 }
