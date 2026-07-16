@@ -1,5 +1,8 @@
 {
     "solidity.compileUsingRemoteVersion": "v0.8.28+commit.7893614a",
+    "rust-analyzer.server.extraEnv": {
+        "RUSTUP_TOOLCHAIN": "1.97.0"
+    },
     "rust-analyzer.cargo.allFeatures": true,
     "rust-analyzer.checkOnSave.command": "clippy",
     "rust-analyzer.checkOnSave": false,

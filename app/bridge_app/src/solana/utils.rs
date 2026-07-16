@@ -1,5 +1,6 @@
 use crate::db::database;
 use crate::errors::FormatError;
+use crate::state::{self};
 use crate::OrderFormatter;
 use anchor_client::solana_sdk::signature::{read_keypair_file, Keypair};
 use anchor_client::Client;
@@ -11,7 +12,6 @@ use anyhow::Ok;
 use bridge::{AdminConfig, OrderId};
 use std::sync::Arc;
 use tokio::sync::OnceCell;
-
 static SOLANA_CLIENT: OnceCell<anchor_client::Program<Arc<Keypair>>> = OnceCell::const_new();
 
 pub async fn get_solana_provider() -> &'static anchor_client::Program<Arc<Keypair>> {
@@ -85,8 +85,8 @@ pub async fn get_token_vault(
 }
 ///if true auth completed (is_interacted,is_admin)
 pub async fn check_interactions_with_program(user: Pubkey) -> Result<(bool, bool), anyhow::Error> {
-    let pool = database::get_pool();
-    let user_exists = database::get_user_id_by_address_solana(&pool,user.to_string()).await? > 0;
+    let pool = state::get_pool();
+    let user_exists = database::get_user_id_by_address_solana(&pool, user.to_string()).await? > 0;
     let admin_exists = check_exist_admin(user.to_string()).await?;
     Ok((user_exists, admin_exists))
 }

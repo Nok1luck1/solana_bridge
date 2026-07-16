@@ -8,32 +8,12 @@ use entity::orders::Entity as OrdersEntity;
 use sea_orm::ActiveValue::NotSet;
 use sea_orm::ColumnTrait;
 use sea_orm::EntityTrait;
-use std::sync::Arc;
 
 use sea_orm::IntoActiveModel;
 use sea_orm::QueryFilter;
 use sea_orm::QuerySelect;
-use sea_orm::{ActiveModelTrait, ActiveValue, Database, DatabaseConnection, DbErr, Set};
-use tokio::sync::OnceCell;
+use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, DbErr, Set};
 
-static DB_POOL: OnceCell<Arc<DatabaseConnection>> = OnceCell::const_new();
-
-pub async fn init_db_pool() {
-    let pool = Database::connect(std::env::var("DATABASE_URL").expect("DATABASE_URL not set"))
-        .await
-        .expect("Failed to create database pool");
-
-    DB_POOL
-        .set(Arc::new(pool))
-        .expect("DB_POOL already initialized");
-}
-
-pub fn get_pool() -> Arc<DatabaseConnection> {
-    DB_POOL
-        .get()
-        .expect("DB_POOL not initialized! Call init_db_pool() first")
-        .clone()
-}
 pub async fn create_order(
     pool: &DatabaseConnection,
     fromevm: bool,

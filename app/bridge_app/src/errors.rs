@@ -1,8 +1,4 @@
-use axum::{
-    http::StatusCode,
-    response::IntoResponse,
-    Json,
-};
+use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde_json::json;
 use thiserror::Error;
 
@@ -30,6 +26,10 @@ pub enum FormatError {
     BlockchainError,
     #[error("Decoder Error")]
     DecoderError,
+    #[error("Failed to start activity")]
+    InitError,
+    #[error("Redis connection pool error")]
+    RedisError,
 }
 impl IntoResponse for FormatError {
     fn into_response(self) -> axum::response::Response {
@@ -51,6 +51,8 @@ impl IntoResponse for FormatError {
             FormatError::BlockchainError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
             FormatError::DecoderError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
             FormatError::AppError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::InitError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
+            FormatError::RedisError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
         };
         (status, Json(json!({ "error": message }))).into_response()
     }

@@ -9,12 +9,15 @@ pub mod local;
 pub mod solana;
 pub mod state;
 pub mod types;
-use crate::solana::utils;
 use crate::types::OrderFormatter;
+use crate::solana::utils;
 use dotenv::dotenv;
 use entity::orders;
+use sea_orm::DatabaseConnection;
+use std::sync::Arc;
 use tracing::Level;
 use tracing_subscriber;
+type AppState = Arc<DatabaseConnection>;
 #[tokio::main]
 
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -25,27 +28,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // // `get_int` returns Option<isize>, as the key may not be found.
     // con.get_int("my_key").unwrap();
     dotenv().ok();
+    state::init_db_pool().await;
+    state::init_redis().await;
     //local::run_evm_local_validator();
     //local::run_solana_local_validator();
     tracing_subscriber::fmt().with_max_level(Level::INFO).init();
     //let _ = bridge::run_bridge().await;
-    let pool: Arc<DatabaseConnection> = crate::db::database::get_pool();
-    let app = axum::Router::new()
-        .route(
-            "/orders/solana",
-            get(handlers::users_routes::get_all_orders_sol),
-        )
-        .route(
-            "/orders/evm",
-            get(handlers::users_routes::get_all_orders_evm),
-        )
-        .route(
-            "/user/orders",
-            post(handlers::users_routes::get_user_orders),
-        )
-        .route("/user/create", post(handlers::users_routes::create_user))
-        .with_state(pool);
 
+    let app = axum::Router::new()
+        // .route(
+        //     "/orders/solana",
+        //     get(handlers::users_routes::get_all_orders_sol),
+        // )
+        // .route(
+        //     "/orders/evm",
+        //     get(handlers::users_routes::get_all_orders_evm),
+        // )
+        // .route(
+        //     "/user/orders",
+        //     post(handlers::users_routes::get_user_orders),
+        // )
+        // .route("/user/create", post(handlers::users_routes::create_user))
+        // .with_state(pool);
+;
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
         .expect(&errors::FormatError::AppError.to_string());

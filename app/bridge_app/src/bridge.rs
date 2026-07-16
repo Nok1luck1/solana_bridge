@@ -3,6 +3,7 @@ use crate::errors;
 use crate::errors::FormatError;
 use crate::eth;
 use crate::solana;
+use crate::state;
 use crate::types;
 use crate::types::OrderFormatter;
 
@@ -45,7 +46,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                     result_order.receiver.to_string(),
                 );
                 println!("{:?} Order EVM gettet", struct_order);
-                let pool = database::get_pool();
+                let pool = state::get_pool();
                 let _save_order_in_db = database::create_order(
                     &pool,
                     true,
@@ -95,7 +96,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
             .await
             {
                 Ok(Ok(Some((order, order_pda)))) => {
-                    let pool = database::get_pool();
+                    let pool = state::get_pool();
                     let order_id = solana::get_current_order_id()
                         .await
                         .expect("Solana order id missing");

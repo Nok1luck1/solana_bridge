@@ -2,6 +2,7 @@ use crate::db::database;
 use crate::errors::FormatError;
 use crate::eth::Bridge;
 use crate::eth::ERC20;
+use crate::state;
 use alloy::primitives::FixedBytes;
 use alloy::primitives::{Address, U256};
 use alloy::providers::{fillers::JoinFill, ProviderBuilder};
@@ -132,8 +133,9 @@ pub async fn check_is_admin(address_admin: String) -> Result<bool, Box<dyn Error
 pub async fn check_interactions_with_program(
     user_addr: Address,
 ) -> Result<(bool, bool), Box<dyn Error>> {
-    let pool = database::get_pool();
-    let is_user_exists = database::get_user_id_by_address_evm(&pool,user_addr.to_string()).await? > 0;
+    let pool = state::get_pool();
+    let is_user_exists =
+        database::get_user_id_by_address_evm(&pool, user_addr.to_string()).await? > 0;
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
