@@ -39,6 +39,7 @@ pub struct CurrentUser {
 }
 #[derive(Deserialize, Serialize)]
 pub struct RandomNonceReq {
-    address: String,
-    nonce: i64,
+    pub address: String,
+    pub rand_nonce: u64,
+    pub rand_bytes_arr: [u8; 32],
 }

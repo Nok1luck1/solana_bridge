@@ -36,4 +36,5 @@ tower = { version = "0.5.3", features = ["full"] }
 tower-http = { version = "0.7.0", features = ["full"] }
 siwe = "=0.6.1"
 redis = { version = "1.3.0", features = ["tokio-comp", "connection-manager"] }
+rand = "0.10.2"
 

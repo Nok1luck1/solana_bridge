@@ -159,7 +159,11 @@ pub async fn get_order_info(order_id: U256) -> Result<Bridge::Order, Box<dyn Err
     println!("getInfo about order {order_id}");
     Ok(order_info)
 }
-pub async fn get_address_nonce(address:String)->Result<u64,Box<dyn Error>>{
+pub async fn get_address_nonce(address: String) -> Result<u64, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
-    let nonce = provider.get_transaction_count(Address::from_str(address.as_str())).pending().await?
+    let nonce = provider
+        .get_transaction_count(Address::from_str(address.as_str())?)
+        .pending()
+        .await?;
+    Ok(nonce)
 }
