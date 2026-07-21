@@ -1,4 +1,3 @@
-use anchor_spl::token_interface::spl_pod::error;
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde_json::json;
 use thiserror::Error;
@@ -33,6 +32,10 @@ pub enum FormatError {
     RedisError,
     #[error("Already registed")]
     RegistrationError,
+    #[error("Error in verifying siganture (expected {expected:?}, got {found:?})")]
+    SignatureMismtachError { expected: String, found: String },
+    #[error("Authorization error")]
+    UnauthorizedError,
 }
 impl IntoResponse for FormatError {
     fn into_response(self) -> axum::response::Response {
@@ -57,6 +60,10 @@ impl IntoResponse for FormatError {
             FormatError::InitError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
             FormatError::RedisError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
             FormatError::RegistrationError => (StatusCode::METHOD_NOT_ALLOWED, ""),
+            FormatError::SignatureMismtachError { expected: _, found: _ } => {
+                (StatusCode::NON_AUTHORITATIVE_INFORMATION, "")
+            }
+            FormatError::UnauthorizedError => (StatusCode::UNAUTHORIZED, ""),
         };
         (status, Json(json!({ "error": message }))).into_response()
     }

@@ -9,8 +9,8 @@ pub mod local;
 pub mod solana;
 pub mod state;
 pub mod types;
-use crate::types::OrderFormatter;
 use crate::solana::utils;
+use crate::types::OrderFormatter;
 use dotenv::dotenv;
 use entity::orders;
 use sea_orm::DatabaseConnection;
@@ -23,10 +23,7 @@ type AppState = Arc<DatabaseConnection>;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //  let client = redis::Client::open("redis://127.0.0.1/")?;
     // let mut con = client.get_connection()?;
-    // // `set` returns a `()`, so we don't need to specify the return type manually unlike in the previous example.
-    // con.set("my_key", 42)?;
-    // // `get_int` returns Option<isize>, as the key may not be found.
-    // con.get_int("my_key").unwrap();
+
     dotenv().ok();
     state::init_db_pool().await;
     state::init_redis().await;

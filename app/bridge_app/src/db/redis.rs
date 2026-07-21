@@ -1,21 +1,26 @@
+use redis::aio::ConnectionManager;
+use redis::{AsyncCommands, RedisError};
 
+pub async fn save_registration_data(
+    redis: &mut ConnectionManager,
+    address: &str,
+    nonce: &u64,
+    rand_bytes: &[u8; 32],
+) -> Result<(), RedisError> {
+    redis
+        .hset::<_, _, _, ()>(format!("register:{address}"), "nonce", nonce)
+        .await?;
 
-
-// static REDIS_POOL: OnceCell<Arc<Client>> = OnceCell::const_new();
-
-// pub async fn init_redis() {
-//     let client = redis::Client::open(std::env::var("REDIS_URL").expect("REDIX_URL not set"))
-//         .expect(&errors::FormatError::InitError.to_string());
-//     REDIS_POOL
-//         .set(Arc::new(client))
-//         .expect(&errors::FormatError::InitError.to_string());
-// }
-// pub fn get_pool() -> Arc<Connection> {
-//     return REDIS_POOL
-//         .get()
-//         .expect(&errors::FormatError::RedisError.to_string())
-//         .clone()
-//         .get_connection()
-//         .expect(&errors::FormatError::RedisError.to_string())
-//         .into();
-// }
+    redis
+        .hset::<_, _, _, ()>(format!("register:{address}"), "bytes", rand_bytes)
+        .await?;
+    Ok(())
+}
+pub async fn get_data_by_address(
+    _redis: &mut ConnectionManager,
+    _address: &str,
+) -> Result<(u64, [u8; 32]), RedisError> {
+    let nonce: u64 = _redis.hget(format!("register:{_address}"), "nonce").await?;
+    let rand_bytes: [u8; 32] = _redis.hget(format!("register:{_address}"), "bytes").await?;
+    Ok((nonce, rand_bytes))
+}

@@ -8,6 +8,7 @@ use alloy::primitives::{Address, U256};
 use alloy::providers::Provider;
 use alloy::providers::{fillers::JoinFill, ProviderBuilder};
 use alloy::signers::local::PrivateKeySigner;
+use alloy::signers::Signature;
 use std::error::Error;
 use std::str::FromStr;
 use tokio::sync::OnceCell;
@@ -166,4 +167,20 @@ pub async fn get_address_nonce(address: String) -> Result<u64, Box<dyn Error>> {
         .pending()
         .await?;
     Ok(nonce)
+}
+pub async fn verify_message(
+    message: String,
+    signature: String,
+    address: String,
+) -> Result<bool, Box<dyn Error>> {
+    let signature_owner =
+        Signature::recover_address_from_msg(&Signature::from_str(&signature).unwrap(), message)
+            .expect(&FormatError::DecoderError.to_string())
+            .to_string();
+    if Address::from_str(signature_owner.as_str()).unwrap()
+        == Address::from_str(address.as_str()).unwrap()
+    {
+        return Ok(true);
+    }
+    Ok(false)
 }

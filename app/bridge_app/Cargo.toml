@@ -10,6 +10,7 @@ anchor-lang = "0.32.1"
 anyhow = "1.0.93"
 tokio = { version = "1.51.0", features = ["full"] }
 anchor-spl = "0.32.1"
+solana-sdk = "3.0.0"
 alloy = { version = "1.0.41", features = ["providers","full"] }
 env = "1.0.1"
 dotenv = "0.15.0"
@@ -37,4 +38,5 @@ tower-http = { version = "0.7.0", features = ["full"] }
 siwe = "=0.6.1"
 redis = { version = "1.3.0", features = ["tokio-comp", "connection-manager"] }
 rand = "0.10.2"
+
 

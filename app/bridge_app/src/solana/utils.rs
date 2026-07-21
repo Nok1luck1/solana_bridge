@@ -10,6 +10,8 @@ use anchor_spl::associated_token::{self, get_associated_token_address};
 use anchor_spl::token::TokenAccount;
 use anyhow::Ok;
 use bridge::{AdminConfig, OrderId};
+use solana_sdk::signature::Signature;
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::OnceCell;
 static SOLANA_CLIENT: OnceCell<anchor_client::Program<Arc<Keypair>>> = OnceCell::const_new();
@@ -101,4 +103,14 @@ pub async fn get_vault_balance(token_mint: Pubkey) -> Result<u64, anyhow::Error>
     let vault_ata = get_associated_token_address(&pubk, &token_mint);
     let vault_acc: TokenAccount = program.account(vault_ata).await?;
     Ok(vault_acc.amount)
+}
+pub async fn verify_message(
+    message: String,
+    signature: String,
+    address: String,
+) -> Result<bool, anyhow::Error> {
+    let public_key = Pubkey::from_str(&address)?;
+    let signature = Signature::from_str(&signature)?;
+
+    Ok(signature.verify(public_key.as_ref(), message.as_bytes()))
 }

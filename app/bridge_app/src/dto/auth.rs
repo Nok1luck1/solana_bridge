@@ -10,27 +10,12 @@ pub struct AuthConfig {
     jwt_secret: String,
     jwt_expiration: i64,
 }
+
 #[derive(Deserialize)]
-pub struct LoginRequest {
-    pub_key: String,
-    is_evm: bool,
-}
-#[derive(Serialize)]
-pub struct LoginResponce {
-    token: String,
-    expiration: i64,
-}
-#[derive(Deserialize)]
-pub struct RegisterRequestEVM {
-    message: String,
-    signature: String,
-    address: String,
-}
-#[derive(Deserialize)]
-pub struct RegisterRequestSOL {
-    message: String,
-    signature: String,
-    publicKey: String,
+pub struct RegisterRequest {
+    pub message: String,
+    pub signature: String,
+    pub address: String,
 }
 #[derive(Debug, Clone)]
 pub struct CurrentUser {
