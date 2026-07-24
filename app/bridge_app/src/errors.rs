@@ -36,11 +36,14 @@ pub enum FormatError {
     SignatureMismtachError { expected: String, found: String },
     #[error("Authorization error")]
     UnauthorizedError,
+    #[error("JWT token error")]
+    JWTokenError,
 }
 impl IntoResponse for FormatError {
     fn into_response(self) -> axum::response::Response {
         let (status, message) = match &self {
             FormatError::BalanceError { has: _, neeed: _ } => (StatusCode::UPGRADE_REQUIRED, ""),
+            FormatError::JWTokenError => (StatusCode::EXPECTATION_FAILED, ""),
             FormatError::MismatchAddressInDb {
                 has: _,
                 must_have: _,
@@ -60,9 +63,10 @@ impl IntoResponse for FormatError {
             FormatError::InitError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
             FormatError::RedisError => (StatusCode::INTERNAL_SERVER_ERROR, ""),
             FormatError::RegistrationError => (StatusCode::METHOD_NOT_ALLOWED, ""),
-            FormatError::SignatureMismtachError { expected: _, found: _ } => {
-                (StatusCode::NON_AUTHORITATIVE_INFORMATION, "")
-            }
+            FormatError::SignatureMismtachError {
+                expected: _,
+                found: _,
+            } => (StatusCode::NON_AUTHORITATIVE_INFORMATION, ""),
             FormatError::UnauthorizedError => (StatusCode::UNAUTHORIZED, ""),
         };
         (status, Json(json!({ "error": message }))).into_response()

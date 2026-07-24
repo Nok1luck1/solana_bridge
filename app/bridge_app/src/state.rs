@@ -1,11 +1,14 @@
-use crate::errors;
+use crate::dto::auth::AuthConfig;
+use crate::{errors, handlers::helpers::Role};
 use redis::aio::ConnectionManager;
 use sea_orm::{Database, DatabaseConnection};
+use serde::{Deserialize, Serialize};
+
 use std::sync::Arc;
 use tokio::sync::OnceCell;
-
 static DB_POOL: OnceCell<Arc<DatabaseConnection>> = OnceCell::const_new();
 static REDIS_POOL: OnceCell<ConnectionManager> = OnceCell::const_new();
+static AUTH_CONFIG: OnceCell<AuthConfig> = OnceCell::const_new();
 
 pub async fn init_db_pool() {
     let pool = Database::connect(std::env::var("DATABASE_URL").expect("DATABASE_URL not set"))
@@ -41,10 +44,30 @@ pub fn get_redis() -> ConnectionManager {
         .expect("REDIS_POOL not initialized! Call init_redis() first")
         .clone()
 }
+pub async fn init_auth_config() {
+    AUTH_CONFIG
+        .set(AuthConfig {
+            jwt_secret: std::env::var("JWT_SECRET").expect("JWT_SECRET not set"),
+            jwt_expiry_hours: std::env::var("JWT_EXPIRY_HOURS")
+                .expect("JWT_EXPIRY_HOURS not set")
+                .parse()
+                .expect("Invalid JWT_EXPIRY_HOURS"),
+        })
+        .expect("AUTH_CONFIG already initialized");
+}
+
+pub fn get_auth_config() -> AuthConfig {
+    AUTH_CONFIG
+        .get()
+        .expect("AUTH_CONFIG not initialized")
+        .clone()
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub db: Arc<DatabaseConnection>,
     pub redis: ConnectionManager,
+    pub auth: AuthConfig,
 }
 
 impl AppState {
@@ -52,6 +75,7 @@ impl AppState {
         Self {
             db: get_pool(),
             redis: get_redis(),
+            auth: get_auth_config(),
         }
     }
 }

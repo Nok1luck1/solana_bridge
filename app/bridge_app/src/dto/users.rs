@@ -2,10 +2,12 @@ use alloy::primitives::Address;
 use anchor_lang::prelude::Pubkey;
 use serde::{Deserialize, Serialize};
 
+use crate::handlers::helpers::Network;
+
 #[derive(Deserialize)]
 pub struct CreateUser {
     pub pub_key: String,
-    pub is_evm: bool,
+    pub network: Network,
 }
 
 #[derive(Deserialize)]
@@ -13,7 +15,7 @@ pub struct GetUserOrders {
     pub address_sol: Pubkey,
     pub address_evm: Address,
     pub maker: bool,
-    pub is_evm: bool,
+    pub network: Network,
     pub limit: u64,
     pub offset: u64,
 }

@@ -39,11 +39,11 @@ pub async fn block_user(
     Json(payload): Json<BlockUser>,
 ) -> (StatusCode, Json<User>) {
     let user_id: i64 = if payload.is_evm {
-        database::get_user_id_by_address_evm(&pool.db, payload.address)
+        database::get_user_id_by_address_evm(&pool.db, &payload.address)
             .await
             .expect(&FormatError::BlockchainError.to_string())
     } else {
-        database::get_user_id_by_address_solana(&pool.db, payload.address)
+        database::get_user_id_by_address_solana(&pool.db, &payload.address)
             .await
             .expect(&FormatError::BlockchainError.to_string())
     };

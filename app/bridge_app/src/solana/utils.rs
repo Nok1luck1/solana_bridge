@@ -45,7 +45,7 @@ pub async fn get_admin_config() -> Result<(Pubkey, AdminConfig), anyhow::Error> 
         .expect(&FormatError::BlockchainError.to_string());
     Ok((admin_config_pda, admin_config_account))
 }
-pub async fn check_exist_admin(is_admin: String) -> Result<bool, anyhow::Error> {
+pub async fn check_exist_admin(is_admin: &String) -> Result<bool, anyhow::Error> {
     let (_, admin_config) = get_admin_config().await?;
     Ok(admin_config
         .admins
@@ -88,8 +88,8 @@ pub async fn get_token_vault(
 ///if true auth completed (is_interacted,is_admin)
 pub async fn check_interactions_with_program(user: Pubkey) -> Result<(bool, bool), anyhow::Error> {
     let pool = state::get_pool();
-    let user_exists = database::get_user_id_by_address_solana(&pool, user.to_string()).await? > 0;
-    let admin_exists = check_exist_admin(user.to_string()).await?;
+    let user_exists = database::get_user_id_by_address_solana(&pool, &user.to_string()).await? > 0;
+    let admin_exists = check_exist_admin(&user.to_string()).await?;
     Ok((user_exists, admin_exists))
 }
 //Getting ATA for user pubkey
@@ -105,12 +105,12 @@ pub async fn get_vault_balance(token_mint: Pubkey) -> Result<u64, anyhow::Error>
     Ok(vault_acc.amount)
 }
 pub async fn verify_message(
-    message: String,
+    message: [u8; 32],
     signature: String,
-    address: String,
+    address: &String,
 ) -> Result<bool, anyhow::Error> {
     let public_key = Pubkey::from_str(&address)?;
     let signature = Signature::from_str(&signature)?;
 
-    Ok(signature.verify(public_key.as_ref(), message.as_bytes()))
+    Ok(signature.verify(public_key.as_ref(), &message))
 }

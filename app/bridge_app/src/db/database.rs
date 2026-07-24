@@ -30,13 +30,13 @@ pub async fn create_order(
 ) -> Result<(), DbErr> {
     let (maker_id, receiver_id): (i32, i32) = if fromevm {
         (
-            get_user_id_by_address_evm(&pool, maker).await? as i32,
-            get_user_id_by_address_solana(&pool, receiver).await? as i32,
+            get_user_id_by_address_evm(&pool, &maker).await? as i32,
+            get_user_id_by_address_solana(&pool, &receiver).await? as i32,
         )
     } else {
         (
-            get_user_id_by_address_solana(&pool, maker).await? as i32,
-            get_user_id_by_address_evm(&pool, receiver).await? as i32,
+            get_user_id_by_address_solana(&pool, &maker).await? as i32,
+            get_user_id_by_address_evm(&pool, &receiver).await? as i32,
         )
     };
     let create_order = orders::ActiveModel {
@@ -123,16 +123,16 @@ pub async fn update_order_with_hash_sol(
 }
 pub async fn get_users_made_orders(
     pool: &DatabaseConnection,
-    user_address: String,
+    user_address: &String,
     in_evm: bool,
     make_or_receive: bool,
     limit: u64,
     offset: u64,
 ) -> Result<Vec<OrderFormatter>, DbErr> {
     let get_user_id: i64 = if in_evm {
-        get_user_id_by_address_evm(&pool, user_address).await?
+        get_user_id_by_address_evm(&pool, &user_address).await?
     } else {
-        get_user_id_by_address_solana(&pool, user_address).await?
+        get_user_id_by_address_solana(&pool, &user_address).await?
     };
     let orders_by_type = if make_or_receive {
         OrdersEntity::find()
@@ -157,10 +157,10 @@ pub async fn get_users_made_orders(
 }
 pub async fn get_user_id_by_address_evm(
     pool: &DatabaseConnection,
-    user_address_evm: String,
+    user_address_evm: &String,
 ) -> Result<i64, DbErr> {
     let evm_user_id = users::Entity::find()
-        .filter(users::Column::AddressEvm.eq(user_address_evm))
+        .filter(users::Column::AddressEvm.eq(&*user_address_evm))
         .one(pool)
         .await?
         .expect(&FormatError::DBError.to_string())
@@ -170,10 +170,10 @@ pub async fn get_user_id_by_address_evm(
 }
 pub async fn get_user_id_by_address_solana(
     pool: &DatabaseConnection,
-    user_address_sol: String,
+    user_address_sol: &String,
 ) -> Result<i64, DbErr> {
     let solana_user_id = users::Entity::find()
-        .filter(users::Column::AddressEvm.eq(user_address_sol))
+        .filter(users::Column::AddressEvm.eq(&*user_address_sol))
         .one(pool)
         .await?
         .expect(&FormatError::DBError.to_string())

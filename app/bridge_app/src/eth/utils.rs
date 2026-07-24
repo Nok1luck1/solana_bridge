@@ -117,7 +117,7 @@ pub async fn execute_order_evm(
 
     Ok(_distribute_tx.transaction_hash)
 }
-pub async fn check_is_admin(address_admin: String) -> Result<bool, Box<dyn Error>> {
+pub async fn check_is_admin(address_admin: &String) -> Result<bool, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str())?;
@@ -125,7 +125,7 @@ pub async fn check_is_admin(address_admin: String) -> Result<bool, Box<dyn Error
     let is_admin: bool = bridge_contract
         .hasRole(
             FixedBytes::ZERO,
-            Address::from_str(address_admin.as_str())
+            Address::from_str(&address_admin.as_str())
                 .expect(&FormatError::BlockchainError.to_string()),
         )
         .call()
@@ -137,7 +137,7 @@ pub async fn check_interactions_with_program(
 ) -> Result<(bool, bool), Box<dyn Error>> {
     let pool = state::get_pool();
     let is_user_exists =
-        database::get_user_id_by_address_evm(&pool, user_addr.to_string()).await? > 0;
+        database::get_user_id_by_address_evm(&pool, &user_addr.to_string()).await? > 0;
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect("Contract addr must be set in .env");
     let contract_address = Address::from_str(addr.as_str());
@@ -145,7 +145,7 @@ pub async fn check_interactions_with_program(
         contract_address.expect(&FormatError::BlockchainError.to_string()),
         &provider,
     );
-    let is_admin = check_is_admin(user_addr.to_string()).await?;
+    let is_admin = check_is_admin(&user_addr.to_string()).await?;
     Ok((is_user_exists, is_admin))
 }
 pub async fn get_order_info(order_id: U256) -> Result<Bridge::Order, Box<dyn Error>> {
@@ -171,7 +171,7 @@ pub async fn get_address_nonce(address: String) -> Result<u64, Box<dyn Error>> {
 pub async fn verify_message(
     message: String,
     signature: String,
-    address: String,
+    address: &String,
 ) -> Result<bool, Box<dyn Error>> {
     let signature_owner =
         Signature::recover_address_from_msg(&Signature::from_str(&signature).unwrap(), message)
