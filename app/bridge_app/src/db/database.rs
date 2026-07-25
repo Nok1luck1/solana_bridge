@@ -1,6 +1,7 @@
 use crate::entity;
 use crate::entity::users;
 use crate::errors::FormatError;
+use crate::errors::FormatError::DBError;
 use crate::orders;
 use crate::orders::Column;
 use crate::types::OrderFormatter;
@@ -28,15 +29,15 @@ pub async fn create_order(
     _hashsol: String,
     _hashevm: String,
 ) -> Result<(), DbErr> {
-    let (maker_id, receiver_id): (i32, i32) = if fromevm {
+    let (maker_id, receiver_id): (i64, i64) = if fromevm {
         (
-            get_user_id_by_address_evm(&pool, &maker).await? as i32,
-            get_user_id_by_address_solana(&pool, &receiver).await? as i32,
+            get_user_id_by_address_evm(&pool, &maker).await? as i64,
+            get_user_id_by_address_solana(&pool, &receiver).await? as i64,
         )
     } else {
         (
-            get_user_id_by_address_solana(&pool, &maker).await? as i32,
-            get_user_id_by_address_evm(&pool, &receiver).await? as i32,
+            get_user_id_by_address_solana(&pool, &maker).await? as i64,
+            get_user_id_by_address_evm(&pool, &receiver).await? as i64,
         )
     };
     let create_order = orders::ActiveModel {
@@ -61,7 +62,7 @@ pub async fn create_user(
     pool: &DatabaseConnection,
     address: String,
     is_evm: bool,
-) -> Result<(), DbErr> {
+) -> Result<i64, DbErr> {
     if is_evm {
         let _create_user = users::ActiveModel {
             id: NotSet,
@@ -69,7 +70,11 @@ pub async fn create_user(
             address_solana: NotSet,
             blocked: Set(false),
         };
-        let _insert = _create_user.insert(pool).await?;
+        let _insert = _create_user
+            .insert(pool)
+            .await
+            .expect(&FormatError::DBError.to_string())
+            .id;
     } else {
         let _create_user = users::ActiveModel {
             id: NotSet,
@@ -77,10 +82,13 @@ pub async fn create_user(
             address_solana: Set(address),
             blocked: Set(false),
         };
-        let _insert = _create_user.insert(pool).await?;
+        let _insert = _create_user
+            .insert(pool)
+            .await
+            .expect(&FormatError::DBError.to_string())
+            .id;
     }
-
-    Ok(())
+    Err(DbErr::RecordNotInserted)
 }
 pub async fn update_user_address(
     pool: &DatabaseConnection,
@@ -88,7 +96,7 @@ pub async fn update_user_address(
     address_evm: String,
     address_sol: String,
 ) -> Result<(), DbErr> {
-    if let Some(user) = users::Entity::find_by_id(user_id as i32).one(pool).await? {
+    if let Some(user) = users::Entity::find_by_id(user_id as i64).one(pool).await? {
         let mut active = user.into_active_model();
         active.address_evm = Set(address_evm.clone());
         active.address_solana = Set(address_sol.clone());
@@ -98,7 +106,7 @@ pub async fn update_user_address(
 }
 pub async fn update_order_with_hash_evm(
     pool: &DatabaseConnection,
-    order_id: i32,
+    order_id: i64,
     hashevm: String,
 ) -> Result<(), DbErr> {
     if let Some(order) = OrdersEntity::find_by_id(order_id).one(pool).await? {
@@ -110,7 +118,7 @@ pub async fn update_order_with_hash_evm(
 }
 pub async fn update_order_with_hash_sol(
     pool: &DatabaseConnection,
-    order_id: i32,
+    order_id: i64,
     hashsolan: String,
 ) -> Result<(), DbErr> {
     if let Some(order) = OrdersEntity::find_by_id(order_id).one(pool).await? {
@@ -191,7 +199,7 @@ pub async fn check_blocked(pool: &DatabaseConnection, user_id: u64) -> Result<bo
     Ok(blocked)
 }
 pub async fn block_user(pool: &DatabaseConnection, user_id: u64) -> Result<users::Model, DbErr> {
-    if let Some(user) = users::Entity::find_by_id(user_id as i32).one(pool).await? {
+    if let Some(user) = users::Entity::find_by_id(user_id as i64).one(pool).await? {
         let mut active = user.into_active_model();
         active.blocked = Set(false);
         let updated_user = active.update(pool).await?;
@@ -202,7 +210,7 @@ pub async fn block_user(pool: &DatabaseConnection, user_id: u64) -> Result<users
 }
 pub async fn get_spicific_order(
     pool: &DatabaseConnection,
-    order_id: i32,
+    order_id: i64,
 ) -> Result<orders::Model, DbErr> {
     let order = orders::Entity::find()
         .filter(orders::Column::Id.eq(order_id))

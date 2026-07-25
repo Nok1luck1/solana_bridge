@@ -1,8 +1,7 @@
 use crate::dto::auth::AuthConfig;
-use crate::{errors, handlers::helpers::Role};
+use crate::errors;
 use redis::aio::ConnectionManager;
 use sea_orm::{Database, DatabaseConnection};
-use serde::{Deserialize, Serialize};
 
 use std::sync::Arc;
 use tokio::sync::OnceCell;

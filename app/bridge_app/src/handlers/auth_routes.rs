@@ -1,5 +1,5 @@
 use crate::db::{database, redis};
-use crate::dto::auth::{self, RandomNonceReq};
+use crate::dto::auth::{self, AuthConfig, RandomNonceReq};
 use crate::errors::{self, FormatError};
 use crate::handlers::auth_routes::auth::Claims;
 use crate::handlers::auth_routes::auth::RegisterRequest;
@@ -8,6 +8,7 @@ use crate::handlers::helpers::{Network, Role};
 use crate::solana;
 use crate::state::AppState;
 use crate::{eth, state};
+use ::redis::aio::ConnectionManager;
 use axum::extract::State;
 use axum::{http::StatusCode, Json};
 use jsonwebtoken::jws::Jws;
@@ -15,78 +16,136 @@ use jsonwebtoken::jws::{decode, encode};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use sea_orm::sqlx::types::chrono::Utc;
 use std::time::Duration;
+use uuid::Uuid;
 
-async fn verify_user_message(
-    Json(_input): Json<RegisterRequest>,
+async fn login_user(
     State(state): State<AppState>,
-) -> Json<StatusCode> {
-    let mut redis_connection = state::get_redis();
-    let connection_type =
-        helpers::detect_network(&_input.address).expect(&FormatError::ParseError.to_string());
+    Json(input): Json<RegisterRequest>,
+) -> Result<StatusCode, StatusCode> {
+    let mut reds = state::get_redis();
+    let (network, role) = verify_wallet(&mut reds, &input).await?;
 
-    let requested_data: (u64, [u8; 32]) =
-        redis::get_data_by_address(&mut redis_connection, &_input.address.to_string())
+    let user_id = if network == Network::Ethereum {
+        database::get_user_id_by_address_evm(&state.db, &input.address)
             .await
-            .expect(&FormatError::RedisError.to_string());
-    //if signed message not same that we give to user then drop
-    if _input.message != requested_data.0.to_string()
-        && _input.message.as_bytes() != requested_data.1
-    {
-        return Json(StatusCode::UNAUTHORIZED);
+            .expect(&FormatError::DBError.to_string())
+    } else {
+        database::get_user_id_by_address_solana(&state.db, &input.address)
+            .await
+            .expect(&FormatError::DBError.to_string())
+    };
+
+    if user_id == 0 {
+        return Err(StatusCode::UNAUTHORIZED);
     }
-    //verify message corectnes
-    match connection_type {
-        Network::Ethereum => eth::verify_message(
-            requested_data.0.to_string(),
-            _input.signature,
-            &_input.address,
-        )
-        .await
-        .expect(&FormatError::DecoderError.to_string()),
-        Network::Solana => {
-            solana::verify_message(requested_data.1, _input.signature, &_input.address)
-                .await
-                .expect(&FormatError::DecoderError.to_string())
-        }
-    };
-    //check if exists
-    let check_id: i64 = if connection_type == Network::Ethereum {
-        database::get_user_id_by_address_evm(&state.db, &_input.address)
-            .await
-            .expect(&FormatError::DBError.to_string())
-    } else {
-        database::get_user_id_by_address_solana(&state.db, &_input.address)
-            .await
-            .expect(&FormatError::DBError.to_string())
-    };
-    //
-    let _role: Role = if connection_type == Network::Ethereum {
-        eth::check_is_admin(&_input.address)
-            .await
-            .expect(&FormatError::BlockchainError.to_string());
-        Role::Admin
-    } else {
-        solana::check_exist_admin(&_input.address)
-            .await
-            .expect(&FormatError::BlockchainError.to_string());
-        Role::Admin
-    };
 
-    //create if not found
-    if connection_type == Network::Ethereum && check_id.eq(&0) {
-        let _crt_user = database::create_user(&state.db, _input.address, true)
-            .await
-            .expect(&FormatError::DBError.to_string());
-    } else if connection_type == Network::Solana && check_id.eq(&0) {
-        let _crt_user = database::create_user(&state.db, _input.address, false)
-            .await
-            .expect(&FormatError::DBError.to_string());
-    };
+    let expiration = Utc::now() + Duration::from_hours(state.auth.jwt_expiry_hours as u64);
+    let token = create_jwt_token(&state.auth, user_id, role, expiration.timestamp() as usize);
+    let mut redis_c = state::get_redis();
+    redis::save_session(
+        &mut redis_c,
+        &token,
+        user_id,
+        expiration.timestamp_millis().try_into().unwrap(),
+    );
 
-    //gen jwt token
-    Json(StatusCode::ACCEPTED)
+    Ok(StatusCode::OK)
+}
+async fn register_user(
+    State(state): State<AppState>,
+    Json(input): Json<RegisterRequest>,
+) -> Result<StatusCode, StatusCode> {
+    let mut reds = state::get_redis();
+    let (network, role) = verify_wallet(&mut reds, &input).await?;
+
+    let user_id = if network == Network::Ethereum {
+        database::get_user_id_by_address_evm(&state.db, &input.address)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    } else {
+        database::get_user_id_by_address_solana(&state.db, &input.address)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    };
+    if user_id != 0 {
+        return Err(StatusCode::CONFLICT);
+    }
+    let new_user = database::create_user(
+        &state.db,
+        input.address.clone(),
+        network == Network::Ethereum,
+    )
+    .await
+    .expect(&FormatError::DBError.to_string());
+    let expiration = Utc::now() + Duration::from_hours(state.auth.jwt_expiry_hours as u64);
+    let token = create_jwt_token(&state.auth, user_id, role, expiration.timestamp() as usize);
+    let mut redis_c = state::get_redis();
+    redis::save_session(
+        &mut redis_c,
+        &token,
+        user_id,
+        expiration.timestamp_millis().try_into().unwrap(),
+    );
+
+    Ok(StatusCode::CREATED)
 }
 
+async fn verify_wallet(
+    redis: &mut ConnectionManager,
+    input: &RegisterRequest,
+) -> Result<(Network, Role), StatusCode> {
+    let connection_type =
+        helpers::detect_network(&input.address).expect(&FormatError::AppError.to_string());
+    let requested_data = redis::get_data_by_address(redis, &input.address)
+        .await
+        .expect(&FormatError::RedisError.to_string());
+
+    if input.message != requested_data.0.to_string() && input.message.as_bytes() != requested_data.1
+    {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+    match connection_type {
+        Network::Ethereum => {
+            eth::verify_message(
+                requested_data.0.to_string(),
+                input.signature.clone(),
+                &input.address,
+            )
+            .await
+            .map_err(|_| StatusCode::UNAUTHORIZED)?;
+        }
+        Network::Solana => {
+            solana::verify_message(requested_data.1, input.signature.clone(), &input.address)
+                .await
+                .map_err(|_| StatusCode::UNAUTHORIZED)?;
+        }
+    }
+
+    let role = match connection_type {
+        Network::Ethereum => {
+            if eth::check_is_admin(&input.address)
+                .await
+                .map_err(|_| StatusCode::UNAUTHORIZED)?
+            {
+                Role::Admin
+            } else {
+                Role::User
+            }
+        }
+        Network::Solana => {
+            if solana::check_exist_admin(&input.address)
+                .await
+                .map_err(|_| StatusCode::UNAUTHORIZED)?
+            {
+                Role::Admin
+            } else {
+                Role::User
+            }
+        }
+    };
+
+    Ok((connection_type, role))
+}
 async fn generate_nonce_bytes(
     State(_state): State<AppState>,
     Json(_input): Json<RandomNonceReq>,
@@ -110,27 +169,30 @@ async fn generate_nonce_bytes(
         rand_bytes_arr: rand_bytes_arr,
     })
 }
-fn create_jwt_token(State(_state): State<AppState>, user_id: i64, role: Role) -> Jws<Claims> {
-    let expiration = Utc::now() + Duration::from_hours(_state.auth.jwt_expiry_hours as u64);
+fn create_jwt_token(config: &AuthConfig, user_id: i64, role: Role, expiration: usize) -> String {
+    let jti = Uuid::new_v4().to_string();
     let claims = Claims {
         sub: user_id,
-        exp: expiration.timestamp() as usize,
-        role: role,
+        exp: expiration,
+        role,
+        jti,
     };
-    encode(
+    let jws = encode(
         &Header::default(),
         Some(&claims),
-        &EncodingKey::from_secret(_state.auth.jwt_secret.as_bytes()),
+        &EncodingKey::from_secret(config.jwt_secret.as_bytes()),
     )
-    .expect(&FormatError::JWTokenError.to_string())
+    .expect(&FormatError::JWTokenError.to_string());
+
+    serde_json::to_string(&jws).expect(&FormatError::JWTokenError.to_string())
 }
-fn verify_jwt_token(
-    State(_state): State<AppState>,
-    token: &Jws<Claims>,
-) -> std::result::Result<Claims, StatusCode> {
+
+fn verify_jwt_token(config: &AuthConfig, token: &str) -> std::result::Result<Claims, StatusCode> {
+    let jws: Jws<Claims> = serde_json::from_str(token).map_err(|_| StatusCode::UNAUTHORIZED)?;
+
     decode::<Claims>(
-        &token,
-        &DecodingKey::from_secret(_state.auth.jwt_secret.as_bytes()),
+        &jws,
+        &DecodingKey::from_secret(config.jwt_secret.as_bytes()),
         &Validation::default(),
     )
     .map(|data| data.claims)

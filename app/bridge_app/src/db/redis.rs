@@ -24,3 +24,44 @@ pub async fn get_data_by_address(
     let rand_bytes: [u8; 32] = _redis.hget(format!("register:{_address}"), "bytes").await?;
     Ok((nonce, rand_bytes))
 }
+pub async fn save_session(
+    redis: &mut ConnectionManager,
+    jti: &str,
+    user_id: i64,
+    ttl_secs: u64,
+) -> Result<(), RedisError> {
+    redis
+        .set_ex::<_, _, ()>(format!("session:{jti}"), user_id, ttl_secs)
+        .await?;
+
+    Ok(())
+}
+pub async fn get_session(
+    redis: &mut ConnectionManager,
+    token: &str,
+) -> Result<Option<i64>, RedisError> {
+    redis
+        .get::<_, Option<i64>>(format!("session:{token}"))
+        .await
+}
+pub async fn delete_session(redis: &mut ConnectionManager, token: &str) -> Result<(), RedisError> {
+    redis.del::<_, ()>(format!("session:{token}")).await?;
+
+    Ok(())
+}
+pub async fn save_jti(
+    redis: &mut ConnectionManager,
+    jti: &str,
+    user_id: i64,
+    ttl_secs: u64,
+) -> Result<(), RedisError> {
+    redis
+        .set_ex::<_, _, ()>(format!("session:{jti}"), user_id, ttl_secs)
+        .await?;
+
+    Ok(())
+}
+pub async fn verify_jti(redis: &mut ConnectionManager, jti: &str) -> Result<bool, RedisError> {
+    let exists: bool = redis.exists(format!("session:{jti}")).await?;
+    Ok(exists)
+}

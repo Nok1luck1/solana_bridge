@@ -68,7 +68,7 @@ pub async fn run_bridge() -> Result<(), Box<dyn std::error::Error>> {
                         .await?;
                 database::update_order_with_hash_sol(
                     &pool,
-                    order_id.to::<i32>(),
+                    order_id.to::<i64>(),
                     execute_order_solana.to_string(),
                 )
                 .await?;

@@ -24,6 +24,7 @@ pub struct Claims {
     pub sub: i64,   // user id
     pub exp: usize, // expiration timestamp
     pub role: Role,
+    pub jti: String,
 }
 #[derive(Clone, Debug)]
 pub struct AuthConfig {

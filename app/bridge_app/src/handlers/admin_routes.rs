@@ -14,7 +14,7 @@ pub async fn get_spicific_order(
     State(pool): State<AppState>,
     Json(payload): Json<GetOrder>,
 ) -> (StatusCode, Json<OrderFormatter>) {
-    let specific_order = database::get_spicific_order(&pool.db, payload.order_id as i32)
+    let specific_order = database::get_spicific_order(&pool.db, payload.order_id)
         .await
         .expect("Cant get Specific order");
     let order = OrderFormatter::from_db_to_formatet(specific_order);

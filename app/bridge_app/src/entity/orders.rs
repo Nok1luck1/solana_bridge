@@ -6,10 +6,10 @@ use sea_orm::entity::prelude::*;
 #[sea_orm(table_name = "orders")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
+    pub id: i64,
     pub fromevmtosol: bool,
-    pub maker: i32,
-    pub receiver: i32,
+    pub maker: i64,
+    pub receiver: i64,
     pub token0: String,
     pub token1: String,
     pub token0amount: i64,

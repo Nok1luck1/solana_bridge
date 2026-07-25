@@ -6,11 +6,11 @@ use sea_orm::entity::prelude::*;
 #[sea_orm(table_name = "evm_tokens")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
+    pub id: i64,
     #[sea_orm(unique)]
     pub address: String,
     pub name: String,
-    pub decimals: i32,
+    pub decimals: i64,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
