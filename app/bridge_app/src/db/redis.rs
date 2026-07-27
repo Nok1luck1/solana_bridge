@@ -1,3 +1,4 @@
+use axum::http::StatusCode;
 use redis::aio::ConnectionManager;
 use redis::{AsyncCommands, RedisError};
 
@@ -36,6 +37,7 @@ pub async fn save_session(
 
     Ok(())
 }
+
 pub async fn get_session(
     redis: &mut ConnectionManager,
     token: &str,

@@ -10,8 +10,9 @@ pub struct RegisterRequest {
 }
 #[derive(Debug, Clone)]
 pub struct CurrentUser {
-    id: i64,
-    role: Role,
+    pub id: i64,
+    pub role: Role,
+    pub jti: String,
 }
 #[derive(Deserialize, Serialize)]
 pub struct RandomNonceReq {

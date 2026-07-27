@@ -9,6 +9,7 @@
      "rust-analyzer.linkedProjects": [
     "app/bridge_app/Cargo.toml",
     "bridge/programs/bridge/Cargo.toml"
-  ]
+  ],
+  "postman.settings.dotenv-detection-notification-visibility": false
   
 }

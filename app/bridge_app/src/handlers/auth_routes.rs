@@ -18,7 +18,7 @@ use sea_orm::sqlx::types::chrono::Utc;
 use std::time::Duration;
 use uuid::Uuid;
 
-async fn login_user(
+pub async fn login_user(
     State(state): State<AppState>,
     Json(input): Json<RegisterRequest>,
 ) -> Result<StatusCode, StatusCode> {
@@ -51,7 +51,7 @@ async fn login_user(
 
     Ok(StatusCode::OK)
 }
-async fn register_user(
+pub async fn register_user(
     State(state): State<AppState>,
     Json(input): Json<RegisterRequest>,
 ) -> Result<StatusCode, StatusCode> {
@@ -187,7 +187,10 @@ fn create_jwt_token(config: &AuthConfig, user_id: i64, role: Role, expiration: u
     serde_json::to_string(&jws).expect(&FormatError::JWTokenError.to_string())
 }
 
-fn verify_jwt_token(config: &AuthConfig, token: &str) -> std::result::Result<Claims, StatusCode> {
+pub fn verify_jwt_token(
+    config: &AuthConfig,
+    token: &str,
+) -> std::result::Result<Claims, StatusCode> {
     let jws: Jws<Claims> = serde_json::from_str(token).map_err(|_| StatusCode::UNAUTHORIZED)?;
 
     decode::<Claims>(

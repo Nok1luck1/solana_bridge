@@ -10,7 +10,7 @@ use axum::{extract::State, http::StatusCode, Json};
 pub async fn force_execute_evm() {}
 pub async fn force_execute_sol() {}
 
-pub async fn get_spicific_order(
+pub async fn get_specific_order(
     State(pool): State<AppState>,
     Json(payload): Json<GetOrder>,
 ) -> (StatusCode, Json<OrderFormatter>) {
@@ -20,18 +20,18 @@ pub async fn get_spicific_order(
     let order = OrderFormatter::from_db_to_formatet(specific_order);
     (StatusCode::OK, Json(order))
 }
-pub async fn get_reserves_evm(Json(payload): Json<GetReservesEvm>) -> (StatusCode, i64) {
+pub async fn get_reserves_evm(Json(payload): Json<GetReservesEvm>) -> (StatusCode, Json<i64>) {
     let token_reserves = eth::check_balance(payload.address_asset)
         .await
         .expect(&FormatError::BlockchainError.to_string())
         .to::<i64>();
-    (StatusCode::FOUND, token_reserves)
+    (StatusCode::FOUND, Json(token_reserves))
 }
-pub async fn get_reserves_sol(Json(payload): Json<GetReservesSol>) -> (StatusCode, i64) {
+pub async fn get_reserves_sol(Json(payload): Json<GetReservesSol>) -> (StatusCode, Json<i64>) {
     let token_mint_reserves = solana::get_vault_balance(payload.mint)
         .await
         .expect(&FormatError::BlockchainError.to_string());
-    (StatusCode::FOUND, token_mint_reserves as i64)
+    (StatusCode::FOUND, Json(token_mint_reserves as i64))
 }
 
 pub async fn block_user(

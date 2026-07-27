@@ -6,24 +6,21 @@ use crate::state::AppState;
 use crate::types::OrderFormatter;
 use axum::Json;
 use axum::{extract::State, http::StatusCode};
-pub async fn get_all_orders_sol<S>(State(pool): State<AppState>) -> Json<Vec<OrderFormatter>> {
+pub async fn get_all_orders_sol(State(pool): State<AppState>) -> Json<Vec<OrderFormatter>> {
     Json(
         database::get_all_solana_order(&pool.db, 50, 50)
             .await
             .expect(&FormatError::DBError.to_string()),
     )
 }
-pub async fn get_all_orders_evm<S>(
-    State(pool): State<AppState>,
-) -> Json<(Vec<OrderFormatter>, StatusCode)> {
-    Json((
+pub async fn get_all_orders_evm(State(pool): State<AppState>) -> Json<Vec<OrderFormatter>> {
+    Json(
         database::get_all_evm_order(&pool.db, 50, 50)
             .await
             .expect(&FormatError::DBError.to_string()),
-        StatusCode::OK,
-    ))
+    )
 }
-pub async fn get_user_orders<S>(
+pub async fn get_user_orders(
     State(pool): State<AppState>,
     Json(payload): Json<GetUserOrders>,
 ) -> (StatusCode, Json<Vec<OrderFormatter>>) {
@@ -44,6 +41,6 @@ pub async fn get_user_orders<S>(
     .expect(&FormatError::DBError.to_string());
     return (StatusCode::OK, Json(user_orders));
 }
-pub async fn create_user<S>(State(_pool): State<AppState>, _payload: CreateUser) -> StatusCode {
+pub async fn create_user(State(_pool): State<AppState>, _payload: CreateUser) -> StatusCode {
     return StatusCode::CREATED;
 }
