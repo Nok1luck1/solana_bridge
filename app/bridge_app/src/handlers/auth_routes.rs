@@ -10,6 +10,7 @@ use crate::state::AppState;
 use crate::{eth, state};
 use ::redis::aio::ConnectionManager;
 use axum::extract::State;
+use axum::response::IntoResponse;
 use axum::{http::StatusCode, Json};
 use jsonwebtoken::jws::Jws;
 use jsonwebtoken::jws::{decode, encode};
@@ -28,11 +29,17 @@ pub async fn login_user(
     let user_id = if network == Network::Ethereum {
         database::get_user_id_by_address_evm(&state.db, &input.address)
             .await
-            .expect(&FormatError::DBError.to_string())
+            .map_err(|err| {
+                tracing::error!("{err:?}");
+                FormatError::DBError.into_response().status()
+            })?
     } else {
         database::get_user_id_by_address_solana(&state.db, &input.address)
             .await
-            .expect(&FormatError::DBError.to_string())
+            .map_err(|err| {
+                tracing::error!("{err:?}");
+                FormatError::DBError.into_response().status()
+            })?
     };
 
     if user_id == 0 {
@@ -61,22 +68,31 @@ pub async fn register_user(
     let user_id = if network == Network::Ethereum {
         database::get_user_id_by_address_evm(&state.db, &input.address)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .map_err(|err| {
+                tracing::error!("{err:?}");
+                FormatError::DBError.into_response().status()
+            })?
     } else {
         database::get_user_id_by_address_solana(&state.db, &input.address)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .map_err(|err| {
+                tracing::error!("{err:?}");
+                FormatError::DBError.into_response().status()
+            })?
     };
     if user_id != 0 {
         return Err(StatusCode::CONFLICT);
     }
-    let new_user = database::create_user(
+    let _new_user = database::create_user(
         &state.db,
         input.address.clone(),
         network == Network::Ethereum,
     )
     .await
-    .expect(&FormatError::DBError.to_string());
+    .map_err(|err| {
+        tracing::error!("{err:?}");
+        FormatError::DBError.into_response().status()
+    })?;
     let expiration = Utc::now() + Duration::from_hours(state.auth.jwt_expiry_hours as u64);
     let token = create_jwt_token(&state.auth, user_id, role, expiration.timestamp() as usize);
     let mut redis_c = state::get_redis();
@@ -98,7 +114,10 @@ async fn verify_wallet(
         helpers::detect_network(&input.address).expect(&FormatError::AppError.to_string());
     let requested_data = redis::get_data_by_address(redis, &input.address)
         .await
-        .expect(&FormatError::RedisError.to_string());
+        .map_err(|err| {
+            tracing::error!("{err:?}");
+            FormatError::RedisError.into_response().status()
+        })?;
 
     if input.message != requested_data.0.to_string() && input.message.as_bytes() != requested_data.1
     {
@@ -152,17 +171,24 @@ async fn generate_nonce_bytes(
 ) -> Json<RandomNonceReq> {
     let nonce = eth::get_address_nonce(_input.address.clone())
         .await
-        .expect(&errors::FormatError::BlockchainError.to_string());
+        .map_err(|err| {
+            tracing::error!("{err:?}");
+            FormatError::BlockchainError
+        })
+        .unwrap();
     let rand_bytes_arr: [u8; 32] = rand::random();
     let mut redis_connection = state::get_redis();
-    redis::save_registration_data(
+    let _ = redis::save_registration_data(
         &mut redis_connection,
         &_input.address,
         &nonce,
         &rand_bytes_arr,
     )
     .await
-    .expect(&FormatError::RedisError.to_string());
+    .map_err(|err| {
+        tracing::error!("{err:?}");
+        FormatError::RedisError
+    });
     Json(RandomNonceReq {
         address: _input.address,
         rand_nonce: nonce,
@@ -182,7 +208,10 @@ fn create_jwt_token(config: &AuthConfig, user_id: i64, role: Role, expiration: u
         Some(&claims),
         &EncodingKey::from_secret(config.jwt_secret.as_bytes()),
     )
-    .expect(&FormatError::JWTokenError.to_string());
+    .map_err(|err| {
+        tracing::error!("{err:?}");
+        FormatError::JWTokenError
+    });
 
     serde_json::to_string(&jws).expect(&FormatError::JWTokenError.to_string())
 }

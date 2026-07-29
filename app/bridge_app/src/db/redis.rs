@@ -1,4 +1,3 @@
-use axum::http::StatusCode;
 use redis::aio::ConnectionManager;
 use redis::{AsyncCommands, RedisError};
 

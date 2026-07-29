@@ -16,8 +16,6 @@ use crate::state::AppState;
 use crate::types::OrderFormatter;
 use dotenv::dotenv;
 use entity::orders;
-use sea_orm::DatabaseConnection;
-use std::sync::Arc;
 use tracing::Level;
 use tracing_subscriber;
 #[tokio::main]
@@ -40,6 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
         .expect(&errors::FormatError::AppError.to_string());
+
     axum::serve(listener, app).await?;
     Ok(())
 }

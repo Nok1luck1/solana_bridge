@@ -58,10 +58,12 @@ impl OrderFormatter {
         }
     }
     pub fn format_for_evm(self) -> (Address, String, Address, String, u64, U256) {
-        let receiver_form =
-            Address::from_str(&self.receiver).expect(&FormatError::ParseError.to_string());
-        let token_form =
-            Address::from_str(&self.token0).expect(&FormatError::ParseError.to_string());
+        let receiver_form = Address::from_str(&self.receiver)
+            .map_err(|_| FormatError::ParseError)
+            .unwrap();
+        let token_form = Address::from_str(&self.token0)
+            .map_err(|_| FormatError::ParseError)
+            .unwrap();
         let amount1 = U256::from(self.amount1);
         return (
             receiver_form,
@@ -73,10 +75,12 @@ impl OrderFormatter {
         );
     }
     pub fn format_for_solana(self) -> (i64, i64, Pubkey, String, i64, i64, String, Pubkey) {
-        let receiver_form =
-            Pubkey::from_str(&self.receiver).expect(&FormatError::ParseError.to_string());
-        let token_form =
-            Pubkey::from_str(&self.token0).expect(&FormatError::ParseError.to_string());
+        let receiver_form = Pubkey::from_str(&self.receiver)
+            .map_err(|_| FormatError::ParseError)
+            .unwrap();
+        let token_form = Pubkey::from_str(&self.token0)
+            .map_err(|_| FormatError::ParseError)
+            .unwrap();
 
         return (
             self.time_started,
@@ -95,12 +99,14 @@ impl OrderFormatter {
                 .timestart
                 .to_string()
                 .parse::<i64>()
-                .expect(&FormatError::ParseError.to_string()),
+                .map_err(|_| FormatError::ParseError)
+                .unwrap(),
             time_executed: model
                 .timeendl
                 .to_string()
                 .parse::<i64>()
-                .expect(&FormatError::ParseError.to_string()),
+                .map_err(|_| FormatError::ParseError)
+                .unwrap(),
             token0: model.token0,
             token1: model.token1,
             amount0: model.token0amount as u64,

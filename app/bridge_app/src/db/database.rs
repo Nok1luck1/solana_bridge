@@ -1,10 +1,10 @@
 use crate::entity;
 use crate::entity::users;
 use crate::errors::FormatError;
-use crate::errors::FormatError::DBError;
 use crate::orders;
 use crate::orders::Column;
 use crate::types::OrderFormatter;
+use axum::Form;
 use entity::orders::Entity as OrdersEntity;
 use sea_orm::ActiveValue::NotSet;
 use sea_orm::ColumnTrait;
@@ -73,7 +73,11 @@ pub async fn create_user(
         let _insert = _create_user
             .insert(pool)
             .await
-            .expect(&FormatError::DBError.to_string())
+            .or_else(|_| {
+                tracing::error!("{}", FormatError::DBError.to_string());
+                Err(FormatError::DBError)
+            })
+            .unwrap()
             .id;
     } else {
         let _create_user = users::ActiveModel {
@@ -85,7 +89,11 @@ pub async fn create_user(
         let _insert = _create_user
             .insert(pool)
             .await
-            .expect(&FormatError::DBError.to_string())
+            .or_else(|_| {
+                tracing::error!("{}", FormatError::DBError.to_string());
+                Err(FormatError::DBError)
+            })
+            .unwrap()
             .id;
     }
     Err(DbErr::RecordNotInserted)
@@ -171,7 +179,11 @@ pub async fn get_user_id_by_address_evm(
         .filter(users::Column::AddressEvm.eq(&*user_address_evm))
         .one(pool)
         .await?
-        .expect(&FormatError::DBError.to_string())
+        .or_else(|| {
+            tracing::error!("{}", FormatError::DBError.to_string());
+            None
+        })
+        .unwrap()
         .id as i64;
 
     Ok(evm_user_id)
@@ -184,7 +196,11 @@ pub async fn get_user_id_by_address_solana(
         .filter(users::Column::AddressEvm.eq(&*user_address_sol))
         .one(pool)
         .await?
-        .expect(&FormatError::DBError.to_string())
+        .or_else(|| {
+            tracing::error!("{}", FormatError::DBError.to_string());
+            None
+        })
+        .unwrap()
         .id as i64;
 
     Ok(solana_user_id)
@@ -194,7 +210,11 @@ pub async fn check_blocked(pool: &DatabaseConnection, user_id: u64) -> Result<bo
         .filter(users::Column::Id.eq(user_id))
         .one(pool)
         .await?
-        .expect(&FormatError::DBError.to_string())
+        .or_else(|| {
+            tracing::error!("{}", FormatError::DBError.to_string());
+            None
+        })
+        .unwrap()
         .blocked;
     Ok(blocked)
 }
@@ -216,7 +236,11 @@ pub async fn get_spicific_order(
         .filter(orders::Column::Id.eq(order_id))
         .one(pool)
         .await?
-        .expect(&FormatError::DBError.to_string());
+        .or_else(|| {
+            tracing::error!("{}", FormatError::DBError.to_string());
+            None
+        })
+        .unwrap();
     Ok(order)
 }
 pub async fn get_all_evm_order(

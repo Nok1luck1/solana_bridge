@@ -1,6 +1,6 @@
 use axum::{
     extract::{Request, State},
-    http::{header, StatusCode},
+    http::header,
     middleware::Next,
     response::Response,
 };
@@ -10,7 +10,7 @@ use crate::{
     dto::auth::CurrentUser,
     errors::FormatError,
     handlers::auth_routes::verify_jwt_token,
-    state::{self, AppState},
+    state::AppState,
 };
 
 pub async fn auth_middleware(

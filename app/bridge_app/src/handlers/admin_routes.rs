@@ -6,55 +6,89 @@ use crate::eth;
 use crate::solana;
 use crate::state::AppState;
 use crate::types::OrderFormatter;
+
 use axum::{extract::State, http::StatusCode, Json};
+
 pub async fn force_execute_evm() {}
+
 pub async fn force_execute_sol() {}
 
 pub async fn get_specific_order(
     State(pool): State<AppState>,
     Json(payload): Json<GetOrder>,
-) -> (StatusCode, Json<OrderFormatter>) {
+) -> Result<(StatusCode, Json<OrderFormatter>), FormatError> {
     let specific_order = database::get_spicific_order(&pool.db, payload.order_id)
         .await
-        .expect("Cant get Specific order");
+        .map_err(|err| {
+            tracing::error!("{err:?}");
+            FormatError::DBError
+        })?;
+
     let order = OrderFormatter::from_db_to_formatet(specific_order);
-    (StatusCode::OK, Json(order))
+
+    Ok((StatusCode::OK, Json(order)))
 }
-pub async fn get_reserves_evm(Json(payload): Json<GetReservesEvm>) -> (StatusCode, Json<i64>) {
+
+pub async fn get_reserves_evm(
+    Json(payload): Json<GetReservesEvm>,
+) -> Result<(StatusCode, Json<i64>), FormatError> {
     let token_reserves = eth::check_balance(payload.address_asset)
         .await
-        .expect(&FormatError::BlockchainError.to_string())
+        .map_err(|err| {
+            tracing::error!("{err:?}");
+            FormatError::BlockchainError
+        })?
         .to::<i64>();
-    (StatusCode::FOUND, Json(token_reserves))
+
+    Ok((StatusCode::OK, Json(token_reserves)))
 }
-pub async fn get_reserves_sol(Json(payload): Json<GetReservesSol>) -> (StatusCode, Json<i64>) {
+
+pub async fn get_reserves_sol(
+    Json(payload): Json<GetReservesSol>,
+) -> Result<(StatusCode, Json<i64>), FormatError> {
     let token_mint_reserves = solana::get_vault_balance(payload.mint)
         .await
-        .expect(&FormatError::BlockchainError.to_string());
-    (StatusCode::FOUND, Json(token_mint_reserves as i64))
+        .map_err(|err| {
+            tracing::error!("{err:?}");
+            FormatError::BlockchainError
+        })?;
+
+    Ok((StatusCode::OK, Json(token_mint_reserves as i64)))
 }
 
 pub async fn block_user(
     State(pool): State<AppState>,
     Json(payload): Json<BlockUser>,
-) -> (StatusCode, Json<User>) {
+) -> Result<(StatusCode, Json<User>), FormatError> {
     let user_id: i64 = if payload.is_evm {
         database::get_user_id_by_address_evm(&pool.db, &payload.address)
             .await
-            .expect(&FormatError::BlockchainError.to_string())
+            .map_err(|err| {
+                tracing::error!("{err:?}");
+                FormatError::DBError
+            })?
     } else {
         database::get_user_id_by_address_solana(&pool.db, &payload.address)
             .await
-            .expect(&FormatError::BlockchainError.to_string())
+            .map_err(|err| {
+                tracing::error!("{err:?}");
+                FormatError::DBError
+            })?
     };
+
     let result = database::block_user(&pool.db, user_id as u64)
         .await
-        .expect(&FormatError::DBError.to_string());
+        .map_err(|err| {
+            tracing::error!("{err:?}");
+            FormatError::DBError
+        })?;
+
     let blocked_user = User {
         id: user_id,
         address_sol: result.address_solana,
         address_evm: result.address_evm,
         blocked: true,
     };
-    (StatusCode::ACCEPTED, Json(blocked_user))
+
+    Ok((StatusCode::ACCEPTED, Json(blocked_user)))
 }

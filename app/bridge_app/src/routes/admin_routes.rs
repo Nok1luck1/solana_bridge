@@ -2,10 +2,8 @@ use crate::handlers::admin_routes::{
     block_user, get_reserves_evm, get_reserves_sol, get_specific_order,
 };
 use crate::AppState;
-use axum::routing::{delete, get, post};
+use axum::routing::post;
 use axum::Router;
-use sea_orm::DatabaseConnection;
-use std::sync::Arc;
 
 pub fn admin_routes() -> Router<AppState> {
     Router::new()

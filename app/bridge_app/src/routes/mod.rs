@@ -5,7 +5,6 @@ use axum::{middleware::from_fn_with_state, Router};
 pub mod admin_routes;
 pub mod auth_routes;
 pub mod user_routes;
-use crate::state;
 pub fn all_routes(state: AppState) -> Router {
     Router::new()
         .nest("/auth", auth_routes::auth_routes())

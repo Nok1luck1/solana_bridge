@@ -33,12 +33,11 @@ pub async fn scan_for_orders() -> Result<Option<(U256, FixedBytes<32>)>, Box<dyn
         ) {
             Ok(decoded) => {
                 let order_id: alloy::primitives::U256 = decoded.orderId;
-                let tx_hash = log
-                    .transaction_hash
-                    .expect(&FormatError::ScanError.to_string());
+                let tx_hash = log.transaction_hash.ok_or_else(|| {
+                    tracing::error!("transaction_hash is None");
+                    FormatError::ScanError
+                })?;
                 println!("Decoded OrderCreated:");
-                // println!("order_id: 0x{}", hex::encode(order_id));
-                // println!("tx_hash: 0x{}", hex::encode(tx_hash));
                 return Ok(Some((order_id, tx_hash)));
             }
             Err(e) => {

@@ -1,17 +1,13 @@
 use axum::{
-    extract::{Request, State},
-    http::{header, StatusCode},
+    extract::Request,
     middleware::Next,
     response::Response,
 };
 
 use crate::handlers::helpers::Role;
 use crate::{
-    db::redis,
     dto::auth::CurrentUser,
     errors::FormatError,
-    handlers::auth_routes::verify_jwt_token,
-    state::{self, AppState},
 };
 
 pub async fn admin_middleware(req: Request, next: Next) -> Result<Response, FormatError> {

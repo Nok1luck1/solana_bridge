@@ -1,8 +1,9 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
+use serde::Serialize;
 use serde_json::json;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize)]
 pub enum FormatError {
     #[error("Invalid header (expected {expected:?}, got {found:?})")]
     InvalidHeader { expected: String, found: String },
