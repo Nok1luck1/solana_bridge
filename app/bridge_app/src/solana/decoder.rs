@@ -1,5 +1,5 @@
-use anchor_lang::AnchorDeserialize;
-use anchor_lang::Discriminator;
+use anchor_client::anchor_lang::AnchorDeserialize;
+use anchor_client::anchor_lang::Discriminator;
 
 use crate::errors::FormatError;
 use crate::types::OrderFormatter;

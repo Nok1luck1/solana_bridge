@@ -85,6 +85,7 @@ fn make_transactions_filter(
             account_include: vec![program_id.to_string()],
             account_exclude: vec![],
             account_required: vec![],
+            token_accounts: None,
         },
     );
     map

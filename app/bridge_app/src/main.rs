@@ -1,4 +1,3 @@
-pub mod bridge;
 pub mod bridges;
 pub mod db;
 pub mod dto;

@@ -1,11 +1,11 @@
 use crate::errors::FormatError;
 use crate::solana::get_solana_provider;
 use crate::utils;
+use anchor_client::solana_sdk::pubkey::Pubkey;
 use anchor_client::solana_sdk::{
     signature::{Keypair, Signature},
     signer::Signer,
 };
-use anchor_lang::prelude::Pubkey;
 
 use anyhow::Ok;
 

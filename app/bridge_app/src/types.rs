@@ -1,7 +1,7 @@
 use crate::entity;
 use crate::errors::FormatError;
 use alloy::primitives::{Address, U256};
-use anchor_lang::prelude::Pubkey;
+use anchor_client::solana_sdk::pubkey::Pubkey;
 use entity::orders::Model;
 use std::fmt::Display;
 use std::{fmt, str::FromStr};

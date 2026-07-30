@@ -1,5 +1,5 @@
 use alloy::primitives::Address;
-use anchor_lang::prelude::Pubkey;
+use anchor_client::solana_sdk::pubkey::Pubkey;
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::helpers::Network;

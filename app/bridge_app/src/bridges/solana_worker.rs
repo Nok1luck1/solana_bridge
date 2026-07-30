@@ -5,7 +5,7 @@ use crate::eth;
 use crate::solana;
 use crate::state;
 
-use anchor_lang::prelude::Pubkey;
+use anchor_client::solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
 use tokio::time::{timeout, Duration};
 
