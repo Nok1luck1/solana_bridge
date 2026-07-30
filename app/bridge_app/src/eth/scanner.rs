@@ -11,9 +11,10 @@ use alloy::{
 use futures::StreamExt;
 use std::{error::Error, str::FromStr};
 
-pub async fn scan_for_orders() -> Result<Option<(U256, FixedBytes<32>)>, Box<dyn Error>> {
-    let rpc_url = std::env::var("WEBSOCKET_EVM").expect("WS url missing");
-    let ws_connect = WsConnect::new(rpc_url);
+pub async fn scan_for_orders(
+    rpc_url: &String,
+) -> Result<Option<(U256, FixedBytes<32>)>, Box<dyn Error>> {
+    let ws_connect = WsConnect::new(rpc_url.clone());
     let provider = ProviderBuilder::new().connect_ws(ws_connect).await?;
     let contract_addr_env = std::env::var("BRIDGE_EVM_ADDR").expect("env bridge addr missing");
     let contract =

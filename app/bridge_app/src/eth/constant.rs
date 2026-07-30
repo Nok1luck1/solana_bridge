@@ -13,6 +13,7 @@ sol! {
    contract Bridge {
      enum OrderType {
         FromEVMtoSol,
+        FromEVMtoEVM,
         FomrSolToEVM
     }
     enum StatusOrder {
@@ -20,6 +21,7 @@ sol! {
         Completed,
         Canceled
     }
+    uint256 public currentOrderCounter;
    struct Order {
         address maker;
         address token0;

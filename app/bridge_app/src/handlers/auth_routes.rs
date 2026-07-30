@@ -1,6 +1,6 @@
 use crate::db::{database, redis};
 use crate::dto::auth::{self, AuthConfig, RandomNonceReq};
-use crate::errors::{self, FormatError};
+use crate::errors::FormatError;
 use crate::handlers::auth_routes::auth::Claims;
 use crate::handlers::auth_routes::auth::RegisterRequest;
 use crate::handlers::helpers;
@@ -49,12 +49,17 @@ pub async fn login_user(
     let expiration = Utc::now() + Duration::from_hours(state.auth.jwt_expiry_hours as u64);
     let token = create_jwt_token(&state.auth, user_id, role, expiration.timestamp() as usize);
     let mut redis_c = state::get_redis();
-    redis::save_session(
+    let _ = redis::save_session(
         &mut redis_c,
         &token,
         user_id,
         expiration.timestamp_millis().try_into().unwrap(),
-    );
+    )
+    .await
+    .map_err(|err| {
+        tracing::error!("{err:?}");
+        FormatError::RedisError.into_response().status()
+    })?;
 
     Ok(StatusCode::OK)
 }
@@ -96,12 +101,17 @@ pub async fn register_user(
     let expiration = Utc::now() + Duration::from_hours(state.auth.jwt_expiry_hours as u64);
     let token = create_jwt_token(&state.auth, user_id, role, expiration.timestamp() as usize);
     let mut redis_c = state::get_redis();
-    redis::save_session(
+    let _ = redis::save_session(
         &mut redis_c,
         &token,
         user_id,
         expiration.timestamp_millis().try_into().unwrap(),
-    );
+    )
+    .await
+    .map_err(|err| {
+        tracing::error!("{err:?}");
+        FormatError::RedisError.into_response().status()
+    })?;
 
     Ok(StatusCode::CREATED)
 }
@@ -165,7 +175,7 @@ async fn verify_wallet(
 
     Ok((connection_type, role))
 }
-async fn generate_nonce_bytes(
+pub async fn generate_nonce_bytes(
     State(_state): State<AppState>,
     Json(_input): Json<RandomNonceReq>,
 ) -> Json<RandomNonceReq> {

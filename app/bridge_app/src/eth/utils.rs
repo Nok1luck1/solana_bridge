@@ -92,7 +92,7 @@ pub async fn execute_order_evm(
     address_sender: String,
     amount_deposited: u64,
     amount_to_distribute: U256,
-) -> Result<FixedBytes<32>, Box<dyn Error>> {
+) -> Result<(FixedBytes<32>, i64), Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
     let addr = std::env::var("BRIDGE_EVM_ADDR").expect(&FormatError::ParseError.to_string());
     let contract_address = Address::from_str(addr.as_str());
@@ -105,6 +105,11 @@ pub async fn execute_order_evm(
         error!("Bridge does not have specific amount to distribute");
         std::process::exit(1);
     }
+    let current_order_id = bridge_contract
+        .currentOrderCounter()
+        .call()
+        .await?
+        .to::<i64>();
     let disctribute_token = bridge_contract.distributeReward(
         address_receiver,
         token_deposited,
@@ -115,7 +120,7 @@ pub async fn execute_order_evm(
     );
     let _distribute_tx = disctribute_token.send().await?.get_receipt().await?;
 
-    Ok(_distribute_tx.transaction_hash)
+    Ok((_distribute_tx.transaction_hash, current_order_id))
 }
 pub async fn check_is_admin(address_admin: &String) -> Result<bool, Box<dyn Error>> {
     let provider = connect_static_evm_provider().await;
