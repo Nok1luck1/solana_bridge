@@ -7,6 +7,7 @@ pub mod auth_routes;
 pub mod user_routes;
 pub fn all_routes(state: AppState) -> Router {
     Router::new()
+        //.nest("/health",)
         .nest("/auth", auth_routes::auth_routes())
         .nest(
             "/user",

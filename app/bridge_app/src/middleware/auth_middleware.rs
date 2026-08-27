@@ -23,17 +23,16 @@ pub async fn auth_middleware(
         .get(header::AUTHORIZATION)
         .ok_or(FormatError::UnauthorizedError)?
         .to_str()
-        .expect(&FormatError::UnauthorizedError.to_string());
+        .map_err(|_| FormatError::UnauthorizedError)?;
     let token = auth
         .strip_prefix("Bearer ")
         .ok_or(FormatError::UnauthorizedError)?;
-    let claims = verify_jwt_token(&config.auth, token).map_err(|_| FormatError::RedisError)?;
+    let claims = verify_jwt_token(&config.auth, token).map_err(|_| FormatError::UnauthorizedError)?;
     let mut redis_con = crate::state::get_redis();
     let exists = redis::get_session(&mut redis_con, &claims.jti)
         .await
-        .map_err(|_| FormatError::RedisError)?
-        .ok_or(FormatError::JWTokenError)?;
-    if exists == 0 {
+        .map_err(|_| FormatError::RedisError)?;
+    if exists.is_none() || exists == Some(0) {
         return Err(FormatError::JWTokenError);
     }
     reqv.extensions_mut().insert(CurrentUser {

@@ -62,40 +62,24 @@ pub async fn create_user(
     address: String,
     is_evm: bool,
 ) -> Result<i64, DbErr> {
-    if is_evm {
-        let _create_user = users::ActiveModel {
+    let active_model = if is_evm {
+        users::ActiveModel {
             id: NotSet,
             address_evm: Set(address),
-            address_solana: NotSet,
+            address_solana: Set(String::new()),
             blocked: Set(false),
-        };
-        let _insert = _create_user
-            .insert(pool)
-            .await
-            .or_else(|_| {
-                tracing::error!("{}", FormatError::DBError.to_string());
-                Err(FormatError::DBError)
-            })
-            .unwrap()
-            .id;
+        }
     } else {
-        let _create_user = users::ActiveModel {
+        users::ActiveModel {
             id: NotSet,
-            address_evm: NotSet,
+            address_evm: Set(String::new()),
             address_solana: Set(address),
             blocked: Set(false),
-        };
-        let _insert = _create_user
-            .insert(pool)
-            .await
-            .or_else(|_| {
-                tracing::error!("{}", FormatError::DBError.to_string());
-                Err(FormatError::DBError)
-            })
-            .unwrap()
-            .id;
-    }
-    Err(DbErr::RecordNotInserted)
+        }
+    };
+
+    let inserted_user = active_model.insert(pool).await?;
+    Ok(inserted_user.id)
 }
 pub async fn update_user_address(
     pool: &DatabaseConnection,
@@ -174,53 +158,47 @@ pub async fn get_user_id_by_address_evm(
     pool: &DatabaseConnection,
     user_address_evm: &String,
 ) -> Result<i64, DbErr> {
-    let evm_user_id = users::Entity::find()
-        .filter(users::Column::AddressEvm.eq(&*user_address_evm))
+    let user = users::Entity::find()
+        .filter(users::Column::AddressEvm.eq(user_address_evm))
         .one(pool)
         .await?
-        .or_else(|| {
-            tracing::error!("{}", FormatError::DBError.to_string());
-            None
-        })
-        .unwrap()
-        .id as i64;
+        .ok_or_else(|| {
+            DbErr::RecordNotFound(format!(
+                "User with EVM address {user_address_evm} not found"
+            ))
+        })?;
 
-    Ok(evm_user_id)
+    Ok(user.id)
 }
 pub async fn get_user_id_by_address_solana(
     pool: &DatabaseConnection,
     user_address_sol: &String,
 ) -> Result<i64, DbErr> {
-    let solana_user_id = users::Entity::find()
-        .filter(users::Column::AddressEvm.eq(&*user_address_sol))
+    let user = users::Entity::find()
+        .filter(users::Column::AddressSolana.eq(user_address_sol))
         .one(pool)
         .await?
-        .or_else(|| {
-            tracing::error!("{}", FormatError::DBError.to_string());
-            None
-        })
-        .unwrap()
-        .id as i64;
+        .ok_or_else(|| {
+            DbErr::RecordNotFound(format!(
+                "User with Solana address {user_address_sol} not found"
+            ))
+        })?;
 
-    Ok(solana_user_id)
+    Ok(user.id)
 }
 pub async fn check_blocked(pool: &DatabaseConnection, user_id: u64) -> Result<bool, DbErr> {
-    let blocked = users::Entity::find()
+    let user = users::Entity::find()
         .filter(users::Column::Id.eq(user_id))
         .one(pool)
         .await?
-        .or_else(|| {
-            tracing::error!("{}", FormatError::DBError.to_string());
-            None
-        })
-        .unwrap()
-        .blocked;
-    Ok(blocked)
+        .ok_or_else(|| DbErr::RecordNotFound(format!("User {user_id} not found")))?;
+
+    Ok(user.blocked)
 }
 pub async fn block_user(pool: &DatabaseConnection, user_id: u64) -> Result<users::Model, DbErr> {
     if let Some(user) = users::Entity::find_by_id(user_id as i64).one(pool).await? {
         let mut active = user.into_active_model();
-        active.blocked = Set(false);
+        active.blocked = Set(true);
         let updated_user = active.update(pool).await?;
         Ok(updated_user)
     } else {

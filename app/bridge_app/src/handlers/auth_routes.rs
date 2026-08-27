@@ -12,8 +12,7 @@ use ::redis::aio::ConnectionManager;
 use axum::extract::State;
 use axum::response::IntoResponse;
 use axum::{http::StatusCode, Json};
-use jsonwebtoken::jws::Jws;
-use jsonwebtoken::jws::{decode, encode};
+use jsonwebtoken::{decode, encode};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use sea_orm::sqlx::types::chrono::Utc;
 use std::time::Duration;
@@ -47,7 +46,8 @@ pub async fn login_user(
     }
 
     let expiration = Utc::now() + Duration::from_hours(state.auth.jwt_expiry_hours as u64);
-    let token = create_jwt_token(&state.auth, user_id, role, expiration.timestamp() as usize);
+    let token = create_jwt_token(&state.auth, user_id, role, expiration.timestamp() as usize)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     let mut redis_c = state::get_redis();
     let _ = redis::save_session(
         &mut redis_c,
@@ -88,7 +88,7 @@ pub async fn register_user(
     if user_id != 0 {
         return Err(StatusCode::CONFLICT);
     }
-    let _new_user = database::create_user(
+    let new_user_id = database::create_user(
         &state.db,
         input.address.clone(),
         network == Network::Ethereum,
@@ -99,12 +99,18 @@ pub async fn register_user(
         FormatError::DBError.into_response().status()
     })?;
     let expiration = Utc::now() + Duration::from_hours(state.auth.jwt_expiry_hours as u64);
-    let token = create_jwt_token(&state.auth, user_id, role, expiration.timestamp() as usize);
+    let token = create_jwt_token(
+        &state.auth,
+        new_user_id,
+        role,
+        expiration.timestamp() as usize,
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     let mut redis_c = state::get_redis();
     let _ = redis::save_session(
         &mut redis_c,
         &token,
-        user_id,
+        new_user_id,
         expiration.timestamp_millis().try_into().unwrap(),
     )
     .await
@@ -120,8 +126,7 @@ async fn verify_wallet(
     redis: &mut ConnectionManager,
     input: &RegisterRequest,
 ) -> Result<(Network, Role), StatusCode> {
-    let connection_type =
-        helpers::detect_network(&input.address).expect(&FormatError::AppError.to_string());
+    let connection_type = helpers::detect_network(&input.address).ok_or(StatusCode::BAD_REQUEST)?;
     let requested_data = redis::get_data_by_address(redis, &input.address)
         .await
         .map_err(|err| {
@@ -177,35 +182,39 @@ async fn verify_wallet(
 }
 pub async fn generate_nonce_bytes(
     State(_state): State<AppState>,
-    Json(_input): Json<RandomNonceReq>,
-) -> Json<RandomNonceReq> {
-    let nonce = eth::get_address_nonce(_input.address.clone())
+    Json(input): Json<RandomNonceReq>,
+) -> Result<Json<RandomNonceReq>, StatusCode> {
+    let nonce = eth::get_address_nonce(input.address.clone())
         .await
         .map_err(|err| {
             tracing::error!("{err:?}");
-            FormatError::BlockchainError
-        })
-        .unwrap();
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     let rand_bytes_arr: [u8; 32] = rand::random();
     let mut redis_connection = state::get_redis();
     let _ = redis::save_registration_data(
         &mut redis_connection,
-        &_input.address,
+        &input.address,
         &nonce,
         &rand_bytes_arr,
     )
     .await
     .map_err(|err| {
         tracing::error!("{err:?}");
-        FormatError::RedisError
+        StatusCode::INTERNAL_SERVER_ERROR
     });
-    Json(RandomNonceReq {
-        address: _input.address,
+    Ok(Json(RandomNonceReq {
+        address: input.address,
         rand_nonce: nonce,
-        rand_bytes_arr: rand_bytes_arr,
-    })
+        rand_bytes_arr,
+    }))
 }
-fn create_jwt_token(config: &AuthConfig, user_id: i64, role: Role, expiration: usize) -> String {
+fn create_jwt_token(
+    config: &AuthConfig,
+    user_id: i64,
+    role: Role,
+    expiration: usize,
+) -> Result<String, FormatError> {
     let jti = Uuid::new_v4().to_string();
     let claims = Claims {
         sub: user_id,
@@ -213,27 +222,23 @@ fn create_jwt_token(config: &AuthConfig, user_id: i64, role: Role, expiration: u
         role,
         jti,
     };
-    let jws = encode(
+    encode(
         &Header::default(),
-        Some(&claims),
+        &claims,
         &EncodingKey::from_secret(config.jwt_secret.as_bytes()),
     )
     .map_err(|err| {
         tracing::error!("{err:?}");
         FormatError::JWTokenError
-    });
-
-    serde_json::to_string(&jws).expect(&FormatError::JWTokenError.to_string())
+    })
 }
 
 pub fn verify_jwt_token(
     config: &AuthConfig,
     token: &str,
 ) -> std::result::Result<Claims, StatusCode> {
-    let jws: Jws<Claims> = serde_json::from_str(token).map_err(|_| StatusCode::UNAUTHORIZED)?;
-
     decode::<Claims>(
-        &jws,
+        token,
         &DecodingKey::from_secret(config.jwt_secret.as_bytes()),
         &Validation::default(),
     )
