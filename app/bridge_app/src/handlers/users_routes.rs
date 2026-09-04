@@ -1,11 +1,11 @@
 use crate::db::database;
 use crate::dto::users::{CreateUser, GetUserOrders};
 use crate::handlers::helpers::Network;
-use crate::state::AppState;
+use crate::state::SharedAppState;
 use crate::types::OrderFormatter;
 use axum::Json;
 use axum::{extract::State, http::StatusCode};
-pub async fn get_all_orders_sol(State(pool): State<AppState>) -> Result<Json<Vec<OrderFormatter>>, StatusCode> {
+pub async fn get_all_orders_sol(State(pool): State<SharedAppState>) -> Result<Json<Vec<OrderFormatter>>, StatusCode> {
     let orders = database::get_all_solana_order(&pool.db, 50, 50)
         .await
         .map_err(|err| {
@@ -14,7 +14,7 @@ pub async fn get_all_orders_sol(State(pool): State<AppState>) -> Result<Json<Vec
         })?;
     Ok(Json(orders))
 }
-pub async fn get_all_orders_evm(State(pool): State<AppState>) -> Result<Json<Vec<OrderFormatter>>, StatusCode> {
+pub async fn get_all_orders_evm(State(pool): State<SharedAppState>) -> Result<Json<Vec<OrderFormatter>>, StatusCode> {
     let orders = database::get_all_evm_order(&pool.db, 50, 50)
         .await
         .map_err(|err| {
@@ -24,7 +24,7 @@ pub async fn get_all_orders_evm(State(pool): State<AppState>) -> Result<Json<Vec
     Ok(Json(orders))
 }
 pub async fn get_user_orders(
-    State(pool): State<AppState>,
+    State(pool): State<SharedAppState>,
     Json(payload): Json<GetUserOrders>,
 ) -> Result<(StatusCode, Json<Vec<OrderFormatter>>), StatusCode> {
     let is_evm = payload.network == Network::Ethereum;
@@ -43,6 +43,6 @@ pub async fn get_user_orders(
     })?;
     Ok((StatusCode::OK, Json(user_orders)))
 }
-pub async fn create_user(State(_pool): State<AppState>, _payload: CreateUser) -> StatusCode {
+pub async fn create_user(State(_pool): State<SharedAppState>, _payload: CreateUser) -> StatusCode {
     StatusCode::CREATED
 }

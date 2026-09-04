@@ -4,7 +4,7 @@ use crate::dto::users::User;
 use crate::errors::FormatError;
 use crate::eth;
 use crate::solana;
-use crate::state::AppState;
+use crate::state::SharedAppState;
 use crate::types::OrderFormatter;
 
 use axum::{extract::State, http::StatusCode, Json};
@@ -14,7 +14,7 @@ pub async fn force_execute_evm() {}
 pub async fn force_execute_sol() {}
 
 pub async fn get_specific_order(
-    State(pool): State<AppState>,
+    State(pool): State<SharedAppState>,
     Json(payload): Json<GetOrder>,
 ) -> Result<(StatusCode, Json<OrderFormatter>), FormatError> {
     let specific_order = database::get_spicific_order(&pool.db, payload.order_id)
@@ -57,7 +57,7 @@ pub async fn get_reserves_sol(
 }
 
 pub async fn block_user(
-    State(pool): State<AppState>,
+    State(pool): State<SharedAppState>,
     Json(payload): Json<BlockUser>,
 ) -> Result<(StatusCode, Json<User>), FormatError> {
     let user_id: i64 = if payload.is_evm {

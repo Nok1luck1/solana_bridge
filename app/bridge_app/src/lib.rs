@@ -13,14 +13,13 @@ pub mod state;
 pub mod types;
 
 use crate::solana::utils;
-use crate::state::AppState;
 use crate::types::OrderFormatter;
 use entity::orders;
 
 use axum::Router;
 use tracing::Level;
 
-pub async fn init() -> state::AppState {
+pub async fn init() -> state::SharedAppState {
     dotenv::dotenv().ok();
 
     let _ = state::init_db_pool().await;
@@ -29,7 +28,7 @@ pub async fn init() -> state::AppState {
     state::AppState::from_static_pools()
 }
 
-pub fn build_app(state: state::AppState) -> Router {
+pub fn build_app(state: state::SharedAppState) -> Router {
     routes::all_routes(state)
 }
 

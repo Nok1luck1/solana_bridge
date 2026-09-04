@@ -1,11 +1,11 @@
 use crate::handlers::admin_routes::{
     block_user, get_reserves_evm, get_reserves_sol, get_specific_order,
 };
-use crate::AppState;
+use crate::state::SharedAppState;
 use axum::routing::post;
 use axum::Router;
 
-pub fn admin_routes() -> Router<AppState> {
+pub fn admin_routes() -> Router<SharedAppState> {
     Router::new()
         .route("/get_reserves_evm", post(get_reserves_evm))
         .route("/get_reserves_sol", post(get_reserves_sol))

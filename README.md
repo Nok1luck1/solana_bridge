@@ -16,3 +16,11 @@ to use grpc for parsing events from program need https://github.com/rpcpool/yell
 } this config with absolute path to file libyellowstone_grpc_geyser.so
 then start validator with additional config
 solana-test-validator   --geyser-plugin-config geyser-config.json 
+
+////////////////////////////////////
+db initialization 
+
+sudo -u bridge_db psql
+CREATE DATABASE bridge_db;
+CREATE USER admin WITH ENCRYPTED PASSWORD '1111';
+GRANT ALL PRIVILEGES ON DATABASE bridge_db TO admin;

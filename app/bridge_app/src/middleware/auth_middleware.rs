@@ -10,11 +10,11 @@ use crate::{
     dto::auth::CurrentUser,
     errors::FormatError,
     handlers::auth_routes::verify_jwt_token,
-    state::AppState,
+    state::SharedAppState,
 };
 
 pub async fn auth_middleware(
-    State(config): State<AppState>,
+    State(config): State<SharedAppState>,
     mut reqv: Request,
     next: Next,
 ) -> Result<Response, FormatError> {
@@ -28,7 +28,7 @@ pub async fn auth_middleware(
         .strip_prefix("Bearer ")
         .ok_or(FormatError::UnauthorizedError)?;
     let claims = verify_jwt_token(&config.auth, token).map_err(|_| FormatError::UnauthorizedError)?;
-    let mut redis_con = crate::state::get_redis();
+    let mut redis_con = config.redis.clone();
     let exists = redis::get_session(&mut redis_con, &claims.jti)
         .await
         .map_err(|_| FormatError::RedisError)?;

@@ -74,12 +74,14 @@ pub struct AppState {
     pub auth: AuthConfig,
 }
 
+pub type SharedAppState = Arc<AppState>;
+
 impl AppState {
-    pub fn from_static_pools() -> Self {
-        Self {
+    pub fn from_static_pools() -> SharedAppState {
+        Arc::new(Self {
             db: get_pool(),
             redis: get_redis(),
             auth: get_auth_config(),
-        }
+        })
     }
 }

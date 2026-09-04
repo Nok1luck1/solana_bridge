@@ -6,8 +6,8 @@ use crate::handlers::auth_routes::auth::RegisterRequest;
 use crate::handlers::helpers;
 use crate::handlers::helpers::{Network, Role};
 use crate::solana;
-use crate::state::AppState;
-use crate::{eth, state};
+use crate::state::SharedAppState;
+use crate::eth;
 use ::redis::aio::ConnectionManager;
 use axum::extract::State;
 use axum::response::IntoResponse;
@@ -19,10 +19,10 @@ use std::time::Duration;
 use uuid::Uuid;
 
 pub async fn login_user(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     Json(input): Json<RegisterRequest>,
 ) -> Result<StatusCode, StatusCode> {
-    let mut reds = state::get_redis();
+    let mut reds = state.redis.clone();
     let (network, role) = verify_wallet(&mut reds, &input).await?;
 
     let user_id = if network == Network::Ethereum {
@@ -48,7 +48,7 @@ pub async fn login_user(
     let expiration = Utc::now() + Duration::from_hours(state.auth.jwt_expiry_hours as u64);
     let token = create_jwt_token(&state.auth, user_id, role, expiration.timestamp() as usize)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    let mut redis_c = state::get_redis();
+    let mut redis_c = state.redis.clone();
     let _ = redis::save_session(
         &mut redis_c,
         &token,
@@ -64,10 +64,10 @@ pub async fn login_user(
     Ok(StatusCode::OK)
 }
 pub async fn register_user(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     Json(input): Json<RegisterRequest>,
 ) -> Result<StatusCode, StatusCode> {
-    let mut reds = state::get_redis();
+    let mut reds = state.redis.clone();
     let (network, role) = verify_wallet(&mut reds, &input).await?;
 
     let user_id = if network == Network::Ethereum {
@@ -106,7 +106,7 @@ pub async fn register_user(
         expiration.timestamp() as usize,
     )
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    let mut redis_c = state::get_redis();
+    let mut redis_c = state.redis.clone();
     let _ = redis::save_session(
         &mut redis_c,
         &token,
@@ -181,7 +181,7 @@ async fn verify_wallet(
     Ok((connection_type, role))
 }
 pub async fn generate_nonce_bytes(
-    State(_state): State<AppState>,
+    State(state): State<SharedAppState>,
     Json(input): Json<RandomNonceReq>,
 ) -> Result<Json<RandomNonceReq>, StatusCode> {
     let nonce = eth::get_address_nonce(input.address.clone())
@@ -191,7 +191,7 @@ pub async fn generate_nonce_bytes(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
     let rand_bytes_arr: [u8; 32] = rand::random();
-    let mut redis_connection = state::get_redis();
+    let mut redis_connection = state.redis.clone();
     let _ = redis::save_registration_data(
         &mut redis_connection,
         &input.address,
